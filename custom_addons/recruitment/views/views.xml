@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="recruitment.list">
+      <field name="name">recruitment list</field>
+      <field name="model">recruitment.recruitment</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </tree>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="recruitment.action_window">
+      <field name="name">recruitment window</field>
+      <field name="res_model">recruitment.recruitment</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="recruitment.action_server">
+      <field name="name">recruitment server</field>
+      <field name="model_id" ref="model_recruitment_recruitment"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="recruitment" id="recruitment.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="recruitment.menu_1" parent="recruitment.menu_root"/>
+    <menuitem name="Menu 2" id="recruitment.menu_2" parent="recruitment.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="recruitment.menu_1_list" parent="recruitment.menu_1"
+              action="recruitment.action_window"/>
+    <menuitem name="Server to list" id="recruitment" parent="recruitment.menu_2"
+              action="recruitment.action_server"/>
+-->
+  </data>
+</odoo>
