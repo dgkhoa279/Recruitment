@@ -16,6 +16,7 @@ Recruitment management module for job positions and applicants.
         'security/ir.model.access.csv',
         'views/views.xml',
         'views/templates.xml',
+        'views/candidate_views.xml',
         'views/job_position_views.xml',
     ],
     'demo': [
