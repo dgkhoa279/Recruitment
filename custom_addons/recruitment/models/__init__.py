@@ -5,3 +5,4 @@ from . import candidate
 from . import job_position
 from . import application
 from . import stage
+from . import interview

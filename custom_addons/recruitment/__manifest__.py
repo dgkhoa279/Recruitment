@@ -21,6 +21,7 @@ Recruitment management module for job positions and applicants.
         'views/job_position_views.xml',
         'views/application_views.xml',
         'views/stage_views.xml',
+        'views/interview_views.xml',
     ],
     'demo': [
         'demo/demo.xml',
