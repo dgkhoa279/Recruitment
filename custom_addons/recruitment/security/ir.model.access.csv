@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_job_position_user,recruitment.job.position.user,model_recruitment_job_position,base.group_user,1,1,1,1
 access_candidate_user,recruitment.candidate.user,model_recruitment_candidate,base.group_user,1,1,1,1
+access_application_user,recruitment.application.user,model_recruitment_application,base.group_user,1,1,1,1
