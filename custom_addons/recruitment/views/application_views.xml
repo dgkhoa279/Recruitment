@@ -12,7 +12,7 @@
                 <field name="candidate_id"/>
                 <field name="job_position_id"/>
                 <field name="application_date"/>
-                <field name="stage"/>
+                <field name="stage_id"/>
                 <field name="source"/>
                 <field name="interview_date"/>
             </tree>
@@ -37,7 +37,7 @@
                         </group>
 
                         <group>
-                            <field name="stage"/>
+                            <field name="stage_id"/>
                             <field name="source"/>
                             <field name="interview_date"/>
                             <field name="active"/>

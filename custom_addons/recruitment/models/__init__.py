@@ -4,3 +4,4 @@ from . import models
 from . import candidate
 from . import job_position
 from . import application
+from . import stage

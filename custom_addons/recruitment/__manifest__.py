@@ -14,11 +14,13 @@ Recruitment management module for job positions and applicants.
     'depends': ['base'],
     'data': [
         'security/ir.model.access.csv',
+        'data/stage_data.xml',
         'views/views.xml',
         'views/templates.xml',
         'views/candidate_views.xml',
         'views/job_position_views.xml',
         'views/application_views.xml',
+        'views/stage_views.xml',
     ],
     'demo': [
         'demo/demo.xml',

@@ -33,18 +33,15 @@ class RecruitmentApplication(models.Model):
         required=True,
     )
 
-    stage = fields.Selection(
-        [
-            ("new", "New"),
-            ("screening", "Screening"),
-            ("interview", "Interview"),
-            ("offer", "Offer"),
-            ("hired", "Hired"),
-            ("rejected", "Rejected"),
-        ],
+    def _default_stage_id(self):
+        return self.env['recruitment.stage'].search([], order='sequence asc', limit=1)
+
+    stage_id = fields.Many2one(
+        "recruitment.stage",
         string="Stage",
-        default="new",
         required=True,
+        ondelete="restrict",
+        default=_default_stage_id,
     )
 
     interview_date = fields.Datetime(
