@@ -25,6 +25,12 @@ Long description of module's purpose
         # 'security/ir.model.access.csv',
         'views/views.xml',
         'views/templates.xml',
+        'views/candidate_views.xml',
+        'views/job_position_views.xml',
+        'views/application_views.xml',
+        'views/stage_views.xml',
+        'views/interview_views.xml',
+        'views/offer_views.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
