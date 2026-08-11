@@ -4,3 +4,4 @@ access_candidate_user,recruitment.candidate.user,model_recruitment_candidate,bas
 access_application_user,recruitment.application.user,model_recruitment_application,base.group_user,1,1,1,1
 access_stage_user,recruitment.stage.user,model_recruitment_stage,base.group_user,1,1,1,1
 access_interview_user,recruitment.interview.user,model_recruitment_interview,base.group_user,1,1,1,1
+access_offer_user,recruitment.offer.user,model_recruitment_offer,base.group_user,1,1,1,1
