@@ -27,6 +27,18 @@ class RecruitmentApplication(models.Model):
         ondelete="restrict",
     )
 
+    interview_ids = fields.One2many(
+        "recruitment.interview",
+        "application_id",
+        string="Interviews",
+    )
+
+    offer_ids = fields.One2many(
+        "recruitment.offer",
+        "application_id",
+        string="Offers",
+)
+
     application_date = fields.Date(
         string="Application Date",
         default=fields.Date.today,
