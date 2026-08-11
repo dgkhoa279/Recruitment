@@ -178,3 +178,35 @@ class RecruitmentOffer(models.Model):
                 raise ValidationError(
                     "This application already has an active offer."
                 )
+
+    def _update_application_stage(self):
+        for offer in self:
+            application = offer.application_id
+            if not application:
+                continue
+
+            if offer.status == "accepted":
+                hired_stage = self.env["recruitment.stage"].search(
+                    [("name", "=ilike", "Hired")],
+                    limit=1,
+                )
+                if hired_stage:
+                    application.stage_id = hired_stage
+            elif offer.status == "rejected":
+                rejected_stage = self.env["recruitment.stage"].search(
+                    [("name", "=ilike", "Rejected")],
+                    limit=1,
+                )
+                if rejected_stage:
+                    application.stage_id = rejected_stage
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._update_application_stage()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._update_application_stage()
+        return res
