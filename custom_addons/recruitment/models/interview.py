@@ -218,3 +218,55 @@ class RecruitmentInterview(models.Model):
                     "A cancelled interview cannot have "
                     "a Pass or Fail result."
                 )
+
+    def _update_application_stage(self):
+        for interview in self:
+            application = interview.application_id
+
+            if not application:
+                continue
+
+            interviews = application.interview_ids
+
+            # Nếu có bất kỳ Interview nào Fail -> Chuyển stage sang Rejected
+            if any(item.result == "fail" for item in interviews):
+                rejected_stage = self.env["recruitment.stage"].search(
+                    [("name", "=ilike", "Rejected")],
+                    limit=1,
+                )
+
+                if rejected_stage:
+                    application.stage_id = rejected_stage
+
+                continue
+
+            # Nếu vẫn còn Interview Pending
+            if any(item.result == "pending" for item in interviews):
+                continue
+
+            # Tất cả Interview đều Pass -> Chuyển stage sang Offer
+            if interviews and all(
+                item.result == "pass" for item in interviews
+            ):
+                offer_stage = self.env["recruitment.stage"].search(
+                    [("name", "=ilike", "Offer")],
+                    limit=1,
+                )
+
+                if offer_stage:
+                    application.stage_id = offer_stage
+
+    @api.onchange("result")
+    def _onchange_result(self):
+        self._update_application_stage()
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._update_application_stage()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._update_application_stage()
+        return res
