@@ -1,28 +1,20 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "recruitment",
-
-    'summary': "Short (1 phrase/line) summary of the module's purpose",
-
+    'name': "Recruitment",
+    'summary': "Recruitment management module",
     'description': """
-Long description of module's purpose
+Recruitment management module for job positions and applicants.
     """,
 
     'author': "My Company",
     'website': "https://www.yourcompany.com",
-
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
-    'category': 'Uncategorized',
+    'category': 'Human Resources',
     'version': '0.1',
-
-    # any module necessary for this one to work correctly
+    'license': 'LGPL-3',
     'depends': ['base'],
-
-    # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
+        'security/ir.model.access.csv',
+        'data/stage_data.xml',
         'views/views.xml',
         'views/templates.xml',
         'views/candidate_views.xml',
@@ -32,9 +24,10 @@ Long description of module's purpose
         'views/interview_views.xml',
         'views/offer_views.xml',
     ],
-    # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
     ],
+    'application': True,
+    'installable': True,
 }
 

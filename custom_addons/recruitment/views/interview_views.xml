@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- Interview List -->
+    <record id="view_interview_list" model="ir.ui.view">
+        <field name="name">recruitment.interview.list</field>
+        <field name="model">recruitment.interview</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="candidate_id"/>
+                <field name="job_position_id"/>
+                <field name="scheduled_date"/>
+                <field name="interview_type"/>
+                <field name="interviewer"/>
+                <field name="status"/>
+                <field name="result"/>
+                <field name="rating"/>
+            </tree>
+        </field>
+    </record>
+
+
+    <!-- Interview Form -->
+    <record id="view_interview_form" model="ir.ui.view">
+        <field name="name">recruitment.interview.form</field>
+        <field name="model">recruitment.interview</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="application_id"/>
+                            <field name="candidate_id"/>
+                            <field name="job_position_id"/>
+                        </group>
+
+                        <group>
+                            <field name="scheduled_date"/>
+                            <field name="interview_type"/>
+                            <field name="location"/>
+                            <field name="interviewer"/>
+                        </group>
+                    </group>
+
+                    <group string="Result">
+                        <field name="status"/>
+                        <field name="result"/>
+                        <field name="rating"/>
+                    </group>
+
+                    <notebook>
+
+                        <page string="Feedback">
+                            <field name="feedback"/>
+                        </page>
+
+                        <page string="Notes">
+                            <field name="note"/>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <!-- Interview Action -->
+    <record id="action_interview" model="ir.actions.act_window">
+        <field name="name">Interviews</field>
+        <field name="res_model">recruitment.interview</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+    <!-- Interview Menu -->
+    <menuitem
+        id="menu_interview"
+        name="Interviews"
+        parent="menu_recruitment_root"
+        action="action_interview"
+        sequence="50"
+    />
+
+</odoo>

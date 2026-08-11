@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- Application List -->
+    <record id="view_application_list" model="ir.ui.view">
+        <field name="name">recruitment.application.list</field>
+        <field name="model">recruitment.application</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="candidate_id"/>
+                <field name="job_position_id"/>
+                <field name="application_date"/>
+                <field name="stage_id"/>
+                <field name="source"/>
+                <field name="interview_date"/>
+            </tree>
+        </field>
+    </record>
+
+
+    <!-- Application Form -->
+    <record id="view_application_form" model="ir.ui.view">
+        <field name="name">recruitment.application.form</field>
+        <field name="model">recruitment.application</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+
+                    <group>
+                        <group>
+                            <field name="name" readonly="1" force_save="1"/>
+                            <field name="candidate_id"/>
+                            <field name="job_position_id"/>
+                            <field name="application_date"/>
+                        </group>
+
+                        <group>
+                            <field name="stage_id"/>
+                            <field name="source"/>
+                            <field name="interview_date"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+
+                    <group string="Salary">
+                        <field name="expected_salary"/>
+                        <field name="proposed_salary"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Notes">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <!-- Application Action -->
+    <record id="action_application" model="ir.actions.act_window">
+        <field name="name">Applications</field>
+        <field name="res_model">recruitment.application</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+    <!-- Application Menu -->
+    <menuitem
+        id="menu_application"
+        name="Applications"
+        parent="menu_recruitment_root"
+        action="action_application"
+        sequence="30"
+    />
+
+</odoo>
