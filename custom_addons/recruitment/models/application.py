@@ -37,7 +37,7 @@ class RecruitmentApplication(models.Model):
         "recruitment.offer",
         "application_id",
         string="Offers",
-)
+    )
 
     application_date = fields.Date(
         string="Application Date",
