@@ -16,7 +16,7 @@ class RecruitmentOffer(models.Model):
         (
             "offer_name_unique",
             "UNIQUE(name)",
-            "Offer name must be unique.",
+            "Offer reference must be unique.",
         ),
     ]
 
@@ -93,9 +93,6 @@ class RecruitmentOffer(models.Model):
         string="Note",
     )
 
-    # =========================================================
-    # CONSTRAINTS
-    # =========================================================
 
     @api.constrains("offer_date", "expiration_date")
     def _check_expiration_date(self):
@@ -121,10 +118,63 @@ class RecruitmentOffer(models.Model):
                     "Start date cannot be before the offer date."
                 )
 
+
     @api.constrains("status", "start_date")
     def _check_accepted_offer(self):
         for record in self:
             if record.status == "accepted" and not record.start_date:
                 raise ValidationError(
                     "An accepted offer must have a start date."
+                )
+
+
+    @api.constrains("status", "start_date")
+    def _check_rejected_offer(self):
+        for record in self:
+            if record.status == "rejected" and record.start_date:
+                raise ValidationError(
+                    "A rejected offer cannot have a start date."
+                )
+
+
+    @api.constrains("status", "start_date")
+    def _check_expired_offer(self):
+        for record in self:
+            if record.status == "expired" and record.start_date:
+                raise ValidationError(
+                    "An expired offer cannot have a start date."
+                )
+
+
+    @api.constrains("offer_date")
+    def _check_offer_date(self):
+        for record in self:
+            if not record.offer_date:
+                raise ValidationError(
+                    "Offer date is required."
+                )
+
+    @api.constrains("application_id", "status")
+    def _check_active_offer(self):
+        active_statuses = ("draft", "sent", "accepted")
+
+        for record in self:
+            if (
+                not record.application_id
+                or record.status not in active_statuses
+            ):
+                continue
+
+            existing_offer = self.search(
+                [
+                    ("application_id", "=", record.application_id.id),
+                    ("id", "!=", record.id),
+                    ("status", "in", active_statuses),
+                ],
+                limit=1,
+            )
+
+            if existing_offer:
+                raise ValidationError(
+                    "This application already has an active offer."
                 )
