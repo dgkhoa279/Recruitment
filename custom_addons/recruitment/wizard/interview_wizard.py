@@ -22,8 +22,14 @@ class RecruitmentInterviewWizard(models.TransientModel):
         string="Job Position",
         readonly=True,
     )
+    interviewer_user_id = fields.Many2one(
+        "res.users",
+        string="Interviewer User",
+        default=lambda self: self.env.user,
+        help="System user who will conduct the interview and receive the notification activity",
+    )
     interviewer = fields.Char(
-        string="Interviewer",
+        string="Interviewer Name",
         required=True,
         default="Bộ phận Tuyển dụng",
     )
@@ -60,6 +66,11 @@ class RecruitmentInterviewWizard(models.TransientModel):
         string="Email Body",
     )
 
+    @api.onchange('interviewer_user_id')
+    def _onchange_interviewer_user_id(self):
+        if self.interviewer_user_id:
+            self.interviewer = self.interviewer_user_id.name
+
     def _render_email_content(self):
         for rec in self:
             if not rec.application_id:
@@ -92,7 +103,7 @@ class RecruitmentInterviewWizard(models.TransientModel):
                 </div>
                 """
 
-    @api.onchange('application_id', 'interviewer', 'scheduled_date', 'interview_type', 'location', 'template_id')
+    @api.onchange('application_id', 'interviewer', 'interviewer_user_id', 'scheduled_date', 'interview_type', 'location', 'template_id')
     def _onchange_interview_fields(self):
         if not self.application_id:
             return
@@ -170,5 +181,33 @@ class RecruitmentInterviewWizard(models.TransientModel):
         }
         mail = self.env['mail.mail'].create(mail_values)
         mail.send()
+
+        # 5. Create Mail Activity notification for Interviewer
+        activity_type = self.env.ref("mail.mail_activity_data_meeting", raise_if_not_found=False)
+        if not activity_type:
+            activity_type = self.env['mail.activity.type'].search([('category', '=', 'meeting')], limit=1)
+
+        assigned_user = self.interviewer_user_id or self.env.user
+        deadline_date = self.scheduled_date.date() if self.scheduled_date else fields.Date.today()
+
+        activity_summary = f"Phỏng vấn ứng viên {app.candidate_id.name}"
+        activity_note = f"""
+        <p><strong>Lịch phỏng vấn đã được xếp thành công:</strong></p>
+        <ul>
+            <li><strong>Ứng viên:</strong> {app.candidate_id.name}</li>
+            <li><strong>Vị trí:</strong> {app.job_position_id.name}</li>
+            <li><strong>Thời gian:</strong> {fields.Datetime.to_string(self.scheduled_date)}</li>
+            <li><strong>Hình thức:</strong> {self.interview_type.capitalize() if self.interview_type else 'Online'}</li>
+            <li><strong>Địa điểm / Link họp:</strong> {self.location}</li>
+        </ul>
+        """
+
+        app.activity_schedule(
+            activity_type_id=activity_type.id if activity_type else False,
+            summary=activity_summary,
+            note=activity_note,
+            date_deadline=deadline_date,
+            user_id=assigned_user.id,
+        )
 
         return {'type': 'ir.actions.act_window_close'}
