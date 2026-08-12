@@ -49,6 +49,7 @@ class RecruitmentCandidate(models.Model):
     experience_years = fields.Float(
         string="Experience Years",
         required=True,
+        default=0,
     )
 
     education = fields.Char(
@@ -75,6 +76,12 @@ class RecruitmentCandidate(models.Model):
     job_position_id = fields.Many2one(
         string="Job Position",
         comodel_name="recruitment.job.position",
+    )
+
+    application_ids = fields.One2many(
+        comodel_name="recruitment.application",
+        inverse_name="candidate_id",
+        string="Applications",
     )
 
     active = fields.Boolean(
