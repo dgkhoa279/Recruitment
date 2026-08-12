@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Refuse Wizard Form View -->
+    <record id="view_recruitment_refuse_wizard_form" model="ir.ui.view">
+        <field name="name">recruitment.refuse.wizard.form</field>
+        <field name="model">recruitment.refuse.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Từ chối Đơn ứng tuyển">
+                <group>
+                    <field name="refuse_reason_id" options="{'no_create': True}"/>
+                    <field name="send_email"/>
+                    <field name="template_id" invisible="not send_email" options="{'no_create': True}"/>
+                    <field name="application_ids" invisible="1"/>
+                </group>
+                <footer>
+                    <button name="action_refuse_reason_apply" string="Xác nhận Từ chối" type="object" class="btn-danger"/>
+                    <button string="Hủy bỏ" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -15,6 +15,7 @@ Recruitment management module for job positions and applicants.
     'data': [
         'security/ir.model.access.csv',
         'data/stage_data.xml',
+        'data/mail_template_data.xml',
         'views/views.xml',
         'views/templates.xml',
         'views/candidate_views.xml',
@@ -23,6 +24,9 @@ Recruitment management module for job positions and applicants.
         'views/stage_views.xml',
         'views/interview_views.xml',
         'views/offer_views.xml',
+        'views/refuse_reason_views.xml',
+        'wizard/refuse_wizard_views.xml',
+        'wizard/interview_wizard_views.xml',
     ],
     'demo': [
         'demo/demo.xml',

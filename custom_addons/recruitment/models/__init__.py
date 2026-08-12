@@ -8,3 +8,4 @@ from . import stage
 from . import interview
 from . import offer
 from . import application_email_parser
+from . import refuse_reason

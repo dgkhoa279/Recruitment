@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- 1. Template: Interview Invitation -->
+        <record id="email_template_interview" model="mail.template">
+            <field name="name">Recruitment: Interview Invitation</field>
+            <field name="model_id" ref="model_recruitment_application"/>
+            <field name="subject">Thư mời phỏng vấn vị trí {{ object.job_position_id.name }}</field>
+            <field name="email_to">{{ object.candidate_id.email }}</field>
+            <field name="description">Template gửi thư mời phỏng vấn cho ứng viên</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Chào <strong><t t-out="object.candidate_id.name or ''">Ứng viên</t></strong>,<br/><br/>
+                        Cảm ơn bạn đã quan tâm và nộp hồ sơ ứng tuyển vào vị trí <strong><t t-out="object.job_position_id.name or ''">Tuyển dụng</t></strong> tại công ty chúng tôi.<br/><br/>
+                        Qua quá trình xem xét hồ sơ, chúng tôi rất ấn tượng với năng lực của bạn và trân trọng mời bạn tham dự buổi phỏng vấn trực tiếp.<br/><br/>
+                        <strong>Thời gian phỏng vấn:</strong> <t t-out="object.interview_date or 'Sẽ thông báo chi tiết'"></t><br/><br/>
+                        Vui lòng phản hồi lại email này để xác nhận sự tham gia của bạn.<br/><br/>
+                        Trân trọng,<br/>
+                        Bộ phận Tuyển dụng
+                    </p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 2. Template: Offer Letter -->
+        <record id="email_template_offer" model="mail.template">
+            <field name="name">Recruitment: Job Offer</field>
+            <field name="model_id" ref="model_recruitment_application"/>
+            <field name="subject">Thư mời nhận việc (Offer Letter) - {{ object.job_position_id.name }}</field>
+            <field name="email_to">{{ object.candidate_id.email }}</field>
+            <field name="description">Template gửi thư mời nhận việc cho ứng viên</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Chúc mừng <strong><t t-out="object.candidate_id.name or ''">Ứng viên</t></strong>,<br/><br/>
+                        Chúng tôi rất vui mừng thông báo bạn đã vượt qua các vòng phỏng vấn và chính thức trúng tuyển vị trí <strong><t t-out="object.job_position_id.name or ''">Tuyển dụng</t></strong>.<br/><br/>
+                        <strong>Mức lương đề xuất:</strong> <t t-out="object.proposed_salary or 0"></t> VNĐ<br/><br/>
+                        Vui lòng xem chi tiết thư mời nhận việc đính kèm và phản hồi xác nhận trước ngày nhận việc.<br/><br/>
+                        Chào mừng bạn gia nhập đội ngũ của chúng tôi!<br/><br/>
+                        Trân trọng,<br/>
+                        Bộ phận Tuyển dụng
+                    </p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 3. Template: Refusal - Skills mismatch -->
+        <record id="email_template_refuse_skills" model="mail.template">
+            <field name="name">Recruitment: Refusal (Skills Mismatch)</field>
+            <field name="model_id" ref="model_recruitment_application"/>
+            <field name="subject">Thông báo kết quả ứng tuyển vị trí {{ object.job_position_id.name }}</field>
+            <field name="email_to">{{ object.candidate_id.email }}</field>
+            <field name="description">Template từ chối do chưa đáp ứng yêu cầu kỹ năng/kinh nghiệm</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Chào <strong><t t-out="object.candidate_id.name or ''">Ứng viên</t></strong>,<br/><br/>
+                        Cảm ơn bạn đã dành thời gian ứng tuyển vị trí <strong><t t-out="object.job_position_id.name or ''">Tuyển dụng</t></strong> tại công ty chúng tôi.<br/><br/>
+                        Sau khi hội đồng tuyển dụng xem xét kỹ lưỡng, rất tiếc ở thời điểm hiện tại hồ sơ của bạn chưa thật sự phù hợp với các yêu cầu kỹ năng chuyên môn của vị trí này.<br/><br/>
+                        Chúng tôi sẽ lưu thông tin của bạn vào hệ thống dữ liệu để liên hệ cho các cơ hội phù hợp hơn trong tương lai.<br/><br/>
+                        Chúc bạn luôn thành công trên con đường sự nghiệp!<br/><br/>
+                        Trân trọng,<br/>
+                        Bộ phận Tuyển dụng
+                    </p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 4. Template: Refusal - Salary expectation mismatch -->
+        <record id="email_template_refuse_salary" model="mail.template">
+            <field name="name">Recruitment: Refusal (Salary Mismatch)</field>
+            <field name="model_id" ref="model_recruitment_application"/>
+            <field name="subject">Thông báo kết quả ứng tuyển vị trí {{ object.job_position_id.name }}</field>
+            <field name="email_to">{{ object.candidate_id.email }}</field>
+            <field name="description">Template từ chối do chưa đạt thỏa thuận lương kỳ vọng</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Chào <strong><t t-out="object.candidate_id.name or ''">Ứng viên</t></strong>,<br/><br/>
+                        Cảm ơn bạn đã tham gia ứng tuyển và trao đổi cùng công ty chúng tôi cho vị trí <strong><t t-out="object.job_position_id.name or ''">Tuyển dụng</t></strong>.<br/><br/>
+                        Rất tiếc hiện tại mức ngân sách cho vị trí này chưa thể đáp ứng được kỳ vọng của bạn. Vì vậy chúng tôi chưa thể đồng hành cùng bạn trong đợt tuyển dụng lần này.<br/><br/>
+                        Hi vọng sẽ có dịp hợp tác cùng bạn trong tương lai.<br/><br/>
+                        Trân trọng,<br/>
+                        Bộ phận Tuyển dụng
+                    </p>
+                </div>
+            </field>
+        </record>
+
+        <!-- 5. Template: Refusal - No response / Timeout -->
+        <record id="email_template_refuse_no_response" model="mail.template">
+            <field name="name">Recruitment: Refusal (No Response)</field>
+            <field name="model_id" ref="model_recruitment_application"/>
+            <field name="subject">Thông báo quá hạn phản hồi ứng tuyển vị trí {{ object.job_position_id.name }}</field>
+            <field name="email_to">{{ object.candidate_id.email }}</field>
+            <field name="description">Template từ chối do hết thời hạn phản hồi</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Chào <strong><t t-out="object.candidate_id.name or ''">Ứng viên</t></strong>,<br/><br/>
+                        Do đã quá thời hạn phản hồi xác nhận thông tin ứng tuyển vị trí <strong><t t-out="object.job_position_id.name or ''">Tuyển dụng</t></strong>, chúng tôi xin phép được khép lại hồ sơ của bạn cho đợt này.<br/><br/>
+                        Cảm ơn sự quan tâm của bạn dành cho công ty.<br/><br/>
+                        Trân trọng,<br/>
+                        Bộ phận Tuyển dụng
+                    </p>
+                </div>
+            </field>
+        </record>
+
+        <!-- Default Refuse Reasons -->
+        <record id="refuse_reason_skills" model="recruitment.refuse.reason">
+            <field name="name">Không đủ kỹ năng / kinh nghiệm</field>
+            <field name="sequence">10</field>
+            <field name="template_id" ref="email_template_refuse_skills"/>
+        </record>
+
+        <record id="refuse_reason_salary" model="recruitment.refuse.reason">
+            <field name="name">Mức lương kỳ vọng quá cao</field>
+            <field name="sequence">20</field>
+            <field name="template_id" ref="email_template_refuse_salary"/>
+        </record>
+
+        <record id="refuse_reason_no_response" model="recruitment.refuse.reason">
+            <field name="name">Hết thời gian phản hồi</field>
+            <field name="sequence">30</field>
+            <field name="template_id" ref="email_template_refuse_no_response"/>
+        </record>
+
+    </data>
+</odoo>
