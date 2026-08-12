@@ -180,6 +180,34 @@ class RecruitmentApplication(models.Model):
             if record.proposed_salary <=0:
                 raise ValidationError("Lương đề xuất phải lớn hơn 0!")
 
+    def _sync_cv_attachment(self):
+        for rec in self:
+            if rec.cv_file and rec.cv_filename:
+                existing = self.env['ir.attachment'].search([
+                    ('res_model', '=', 'recruitment.application'),
+                    ('res_id', '=', rec.id),
+                    ('name', '=', rec.cv_filename),
+                ], limit=1)
+                if not existing:
+                    self.env['ir.attachment'].create({
+                        'name': rec.cv_filename,
+                        'datas': rec.cv_file,
+                        'res_model': 'recruitment.application',
+                        'res_id': rec.id,
+                    })
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._sync_cv_attachment()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'cv_file' in vals or 'cv_filename' in vals:
+            self._sync_cv_attachment()
+        return res
+
     @api.depends('candidate_id', 'job_position_id')
     def _compute_name(self):
         for record in self:
