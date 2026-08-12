@@ -205,6 +205,10 @@ Vị trí ứng tuyển: Python Developer
         self.assertEqual(interviews.interviewer, 'Trần Văn A')
         self.assertEqual(interviews.location, 'https://meet.google.com/test-meet')
 
+        # Verify Mail Activity created for Application
+        self.assertTrue(app.activity_ids)
+        self.assertIn("Phỏng vấn ứng viên", app.activity_ids[0].summary)
+
         # 2. Test Offer Action
         res_offer = app.action_send_offer_email()
         self.assertEqual(res_offer['res_model'], 'mail.compose.message')

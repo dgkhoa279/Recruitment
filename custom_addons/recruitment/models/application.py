@@ -8,7 +8,7 @@ from .application_email_parser import ApplicationEmailParser
 class RecruitmentApplication(models.Model):
     _name = "recruitment.application"
     _description = "Recruitment Application"
-    _inherit = ["mail.thread"]
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "application_date desc"
 
     name = fields.Char(
