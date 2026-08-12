@@ -61,6 +61,19 @@
                             </group>
                         </page>
 
+                        <page string="Applications">
+                            <field name="application_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="job_position_id"/>
+                                    <field name="application_date"/>
+                                    <field name="stage_id"/>
+                                    <field name="cv_file" filename="cv_filename"/>
+                                    <field name="cv_filename" column_invisible="1"/>
+                                </tree>
+                            </field>
+                        </page>
+
                         <page string="Address">
                             <field name="address"/>
                         </page>

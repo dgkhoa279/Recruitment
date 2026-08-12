@@ -11,7 +11,7 @@ Recruitment management module for job positions and applicants.
     'category': 'Human Resources',
     'version': '0.1',
     'license': 'LGPL-3',
-    'depends': ['base'],
+    'depends': ['base', 'mail'],
     'data': [
         'security/ir.model.access.csv',
         'data/stage_data.xml',
