@@ -5,3 +5,6 @@ access_application_user,recruitment.application.user,model_recruitment_applicati
 access_stage_user,recruitment.stage.user,model_recruitment_stage,base.group_user,1,1,1,1
 access_interview_user,recruitment.interview.user,model_recruitment_interview,base.group_user,1,1,1,1
 access_offer_user,recruitment.offer.user,model_recruitment_offer,base.group_user,1,1,1,1
+access_refuse_reason_user,recruitment.refuse.reason.user,model_recruitment_refuse_reason,base.group_user,1,1,1,1
+access_refuse_wizard_user,recruitment.refuse.wizard.user,model_recruitment_refuse_wizard,base.group_user,1,1,1,1
+access_interview_wizard_user,recruitment.interview.wizard.user,model_recruitment_interview_wizard,base.group_user,1,1,1,1

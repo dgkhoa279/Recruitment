@@ -15,37 +15,68 @@
                 <field name="stage_id"/>
                 <field name="source"/>
                 <field name="interview_date"/>
+                <field name="refuse_reason_id" optional="hide"/>
+                <field name="active" optional="hide"/>
             </tree>
+        </field>
+    </record>
+
+    <!-- Application Search View -->
+    <record id="view_application_search" model="ir.ui.view">
+        <field name="name">recruitment.application.search</field>
+        <field name="model">recruitment.application</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="candidate_id"/>
+                <field name="job_position_id"/>
+                <field name="stage_id"/>
+                <filter string="Đang hoạt động" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Đã từ chối (Archived)" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Trạng thái (Stage)" name="groupby_stage" context="{'group_by': 'stage_id'}"/>
+                    <filter string="Vị trí tuyển dụng" name="groupby_job" context="{'group_by': 'job_position_id'}"/>
+                    <filter string="Lý do từ chối" name="groupby_refuse_reason" context="{'group_by': 'refuse_reason_id'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
 
     <!-- Application Form -->
-<record id="view_application_form" model="ir.ui.view">
-    <field name="name">recruitment.application.form</field>
-    <field name="model">recruitment.application</field>
-    <field name="arch" type="xml">
-        <form>
-            <sheet>
+    <record id="view_application_form" model="ir.ui.view">
+        <field name="name">recruitment.application.form</field>
+        <field name="model">recruitment.application</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send_interview_email" string="Mời phỏng vấn" type="object" class="oe_highlight" invisible="not active"/>
+                    <button name="action_send_offer_email" string="Mời nhận việc (Offer)" type="object" class="btn-success" invisible="not active"/>
+                    <button name="action_open_refuse_wizard" string="Từ chối" type="object" class="btn-danger" invisible="not active"/>
+                    <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Refused" bg_color="text-bg-danger" invisible="active"/>
 
-                <!-- Basic Information -->
-                <group>
+                    <!-- Basic Information -->
                     <group>
-                        <field name="name"
-                               readonly="1"
-                               force_save="1"/>
-                        <field name="candidate_id"/>
-                        <field name="job_position_id"/>
-                        <field name="application_date"/>
-                    </group>
+                        <group>
+                            <field name="name"
+                                   readonly="1"
+                                   force_save="1"/>
+                            <field name="candidate_id"/>
+                            <field name="job_position_id"/>
+                            <field name="application_date"/>
+                        </group>
 
-                    <group>
-                        <field name="stage_id"/>
-                        <field name="source"/>
-                        <field name="interview_date"/>
-                        <field name="active"/>
+                        <group>
+                            <field name="source"/>
+                            <field name="interview_date"/>
+                            <field name="refuse_reason_id" invisible="active"/>
+                            <field name="active"/>
+                        </group>
                     </group>
-                </group>
 
                     <notebook>
                         <!-- CV -->
@@ -88,10 +119,10 @@
                         </page>
                     </notebook>
 
-            </sheet>
-        </form>
-    </field>
-</record>
+                </sheet>
+            </form>
+        </field>
+    </record>
 
 
     <!-- Application Action -->
@@ -99,6 +130,7 @@
         <field name="name">Applications</field>
         <field name="res_model">recruitment.application</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_application_search"/>
     </record>
 
 

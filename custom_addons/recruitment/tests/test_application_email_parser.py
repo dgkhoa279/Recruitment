@@ -1,3 +1,5 @@
+import datetime
+from odoo import fields
 from odoo.tests.common import TransactionCase
 
 from ..models.application_email_parser import ApplicationEmailParser
@@ -172,3 +174,51 @@ Vị trí ứng tuyển: Python Developer
         # Mỗi Application lưu đúng file CV riêng biệt
         self.assertEqual(app_1.cv_filename, 'CV_Backend.pdf')
         self.assertEqual(app_2.cv_filename, 'CV_DevOps.pdf')
+
+    def test_refuse_wizard_and_email_sending(self):
+        msg_dict = {
+            'subject': '[APPLICATION] Tester',
+            'body': 'Họ tên: Phạm Văn D\nEmail: phamvand@gmail.com\nSố điện thoại: 0933445566',
+            'attachments': [('CV_Tester.pdf', b'fake-content', 'application/pdf')]
+        }
+        app = self.env['recruitment.application'].message_new(msg_dict)
+        self.assertTrue(app.active)
+
+        # 1. Test Interview Action & Wizard
+        res_interview = app.action_send_interview_email()
+        self.assertEqual(res_interview['res_model'], 'recruitment.interview.wizard')
+
+        future_date = fields.Datetime.now() + datetime.timedelta(days=2)
+        int_wizard = self.env['recruitment.interview.wizard'].create({
+            'application_id': app.id,
+            'interviewer': 'Trần Văn A',
+            'scheduled_date': future_date,
+            'interview_type': 'online',
+            'location': 'https://meet.google.com/test-meet',
+        })
+        int_wizard._onchange_interview_fields()
+        self.assertIn('Trần Văn A', int_wizard.body_html)
+
+        int_wizard.action_send_mail_and_create_interview()
+        interviews = self.env['recruitment.interview'].search([('application_id', '=', app.id)])
+        self.assertTrue(interviews)
+        self.assertEqual(interviews.interviewer, 'Trần Văn A')
+        self.assertEqual(interviews.location, 'https://meet.google.com/test-meet')
+
+        # 2. Test Offer Action
+        res_offer = app.action_send_offer_email()
+        self.assertEqual(res_offer['res_model'], 'mail.compose.message')
+
+        # 3. Test Refuse Wizard
+        reason = self.env.ref('recruitment.refuse_reason_skills')
+        wizard = self.env['recruitment.refuse.wizard'].create({
+            'application_ids': [(6, 0, [app.id])],
+            'refuse_reason_id': reason.id,
+            'send_email': True,
+        })
+        wizard._onchange_refuse_reason_id()
+        self.assertEqual(wizard.template_id.id, reason.template_id.id)
+
+        wizard.action_refuse_reason_apply()
+        self.assertFalse(app.active)
+        self.assertEqual(app.refuse_reason_id.id, reason.id)

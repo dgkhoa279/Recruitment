@@ -1,6 +1,7 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 import base64
+import datetime
 from .application_email_parser import ApplicationEmailParser
 
 
@@ -101,6 +102,62 @@ class RecruitmentApplication(models.Model):
     cv_filename = fields.Char(
         string="CV Filename",
     )
+
+    refuse_reason_id = fields.Many2one(
+        "recruitment.refuse.reason",
+        string="Refuse Reason",
+    )
+
+    def action_send_interview_email(self):
+        self.ensure_one()
+        template = self.env.ref("recruitment.email_template_interview", raise_if_not_found=False)
+        default_date = self.interview_date or (fields.Datetime.now() + datetime.timedelta(days=1))
+        return {
+            'name': 'Đặt Lịch Phỏng Vấn & Gửi Thư Mời',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'recruitment.interview.wizard',
+            'target': 'new',
+            'context': {
+                'default_application_id': self.id,
+                'default_template_id': template.id if template else False,
+                'default_scheduled_date': default_date,
+            },
+        }
+
+    def action_send_offer_email(self):
+        self.ensure_one()
+        template = self.env.ref("recruitment.email_template_offer", raise_if_not_found=False)
+        if not template:
+            return False
+        ctx = {
+            'default_model': 'recruitment.application',
+            'default_res_ids': self.ids,
+            'default_template_id': template.id,
+            'default_composition_mode': 'comment',
+        }
+        return {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(False, 'form')],
+            'view_id': False,
+            'target': 'new',
+            'context': ctx,
+        }
+
+    def action_open_refuse_wizard(self):
+        self.ensure_one()
+        return {
+            'name': 'Từ chối Đơn ứng tuyển',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'recruitment.refuse.wizard',
+            'target': 'new',
+            'context': {
+                'default_application_ids': [self.id],
+            },
+        }
 
     @api.onchange('candidate_id')
     def _onchange_candidate_id(self):
