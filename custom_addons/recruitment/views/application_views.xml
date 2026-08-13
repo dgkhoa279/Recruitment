@@ -176,11 +176,35 @@
         </field>
     </record>
 
+    <!-- Application Graph View -->
+    <record id="view_application_graph" model="ir.ui.view">
+        <field name="name">recruitment.application.graph</field>
+        <field name="model">recruitment.application</field>
+        <field name="arch" type="xml">
+            <graph string="Phân tích Đơn ứng tuyển" type="bar" sample="1">
+                <field name="stage_id"/>
+                <field name="job_position_id"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Application Pivot View -->
+    <record id="view_application_pivot" model="ir.ui.view">
+        <field name="name">recruitment.application.pivot</field>
+        <field name="model">recruitment.application</field>
+        <field name="arch" type="xml">
+            <pivot string="Bảng phân tích Tuyển dụng" sample="1">
+                <field name="job_position_id" type="row"/>
+                <field name="stage_id" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
     <!-- Application Action -->
     <record id="action_application" model="ir.actions.act_window">
         <field name="name">Applications</field>
         <field name="res_model">recruitment.application</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,tree,form,graph,pivot</field>
         <field name="search_view_id" ref="view_application_search"/>
         <field name="context">{'search_default_groupby_stage': 1}</field>
     </record>
