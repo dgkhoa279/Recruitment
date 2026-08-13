@@ -240,3 +240,28 @@ Vị trí ứng tuyển: Python Developer
         wizard.action_refuse_reason_apply()
         self.assertFalse(app.active)
         self.assertEqual(app.refuse_reason_id.id, reason.id)
+
+    def test_cv_pdf_skill_scanning(self):
+        """Test CV PDF text extraction and skill matching score calculation."""
+        job = self.env['recruitment.job.position'].create({
+            'name': 'Python Skill Developer',
+            'required_skills': 'Python, Odoo, HTML, CSS, PostgreSQL',
+            'quantity': 1,
+        })
+        candidate = self.env['recruitment.candidate'].create({
+            'name': 'Nguyễn Văn Skill',
+            'email': 'skill.test@example.com',
+            'job_position_id': job.id,
+        })
+
+        cv_text = "Experienced software engineer specializing in Python, Odoo, HTML, and CSS."
+        app = self.env['recruitment.application'].create({
+            'candidate_id': candidate.id,
+            'job_position_id': job.id,
+            'cv_file': base64.b64encode(cv_text.encode('utf-8')),
+            'cv_filename': 'resume.txt',
+        })
+
+        self.assertEqual(app.matching_score, 80.0)
+        self.assertIn("Python", app.matched_skills)
+        self.assertIn("PostgreSQL", app.missing_skills)
