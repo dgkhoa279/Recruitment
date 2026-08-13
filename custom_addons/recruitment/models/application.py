@@ -1,8 +1,22 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+from markupsafe import Markup
 import base64
 import datetime
+import io
+import re
+import logging
 from .application_email_parser import ApplicationEmailParser
+
+_logger = logging.getLogger(__name__)
+
+try:
+    import pypdf as pdf_module
+except ImportError:
+    try:
+        import PyPDF2 as pdf_module
+    except ImportError:
+        pdf_module = None
 
 
 class RecruitmentApplication(models.Model):
@@ -115,6 +129,140 @@ class RecruitmentApplication(models.Model):
         string="Refuse Reason",
     )
 
+    cv_extracted_text = fields.Text(
+        string="Extracted CV Text",
+        readonly=True,
+        help="Nội dung văn bản bóc tách từ file CV PDF",
+    )
+
+    matching_score = fields.Float(
+        string="Skill Matching Score (%)",
+        readonly=True,
+        default=0.0,
+        help="Tỷ lệ phần trăm phù hợp kỹ năng so với yêu cầu vị trí tuyển dụng",
+    )
+
+    matched_skills = fields.Char(
+        string="Matched Skills",
+        readonly=True,
+        help="Các kỹ năng tìm thấy trong CV",
+    )
+
+    missing_skills = fields.Char(
+        string="Missing Skills",
+        readonly=True,
+        help="Các kỹ năng còn thiếu trong CV",
+    )
+
+    def _extract_text_from_cv(self, cv_bytes):
+        """Helper method to extract text from PDF or raw bytes."""
+        if not cv_bytes:
+            return ""
+
+        if cv_bytes.startswith(b"%PDF"):
+            if not pdf_module:
+                return "Chưa cài đặt thư viện đọc PDF (pypdf/PyPDF2)."
+
+            text_pages = []
+            try:
+                if hasattr(pdf_module, "PdfReader"):
+                    reader = pdf_module.PdfReader(io.BytesIO(cv_bytes))
+                    pages = reader.pages
+                else:
+                    reader = pdf_module.PdfFileReader(io.BytesIO(cv_bytes))
+                    num_pages = (
+                        reader.getNumPages()
+                        if hasattr(reader, "getNumPages")
+                        else len(reader.pages)
+                    )
+                    pages = [reader.getPage(i) for i in range(num_pages)]
+
+                for page in pages:
+                    extract_fn = getattr(page, "extract_text", None) or getattr(
+                        page, "extractText", None
+                    )
+                    if extract_fn:
+                        txt = extract_fn()
+                        if txt:
+                            text_pages.append(txt)
+                return "\n".join(text_pages)
+            except Exception as e:
+                return f"Không thể trích xuất văn bản từ PDF: {str(e)}"
+        else:
+            try:
+                return cv_bytes.decode("utf-8")
+            except Exception:
+                return "File CV đính kèm không thuộc định dạng PDF văn bản hợp lệ."
+
+    def action_scan_cv(self):
+        """
+        Parses PDF CV file, extracts plain text, compares with
+        job_position_id.required_skills, calculates matching score (%), and records matched/missing skills.
+        """
+        for app in self:
+            if not app.cv_file:
+                app.write({
+                    "cv_extracted_text": False,
+                    "matching_score": 0.0,
+                    "matched_skills": False,
+                    "missing_skills": False,
+                })
+                continue
+
+            cv_bytes = base64.b64decode(app.cv_file)
+            extracted_text = app._extract_text_from_cv(cv_bytes)
+
+            req_skills_str = app.job_position_id.required_skills or ""
+            required_skills_list = [
+                s.strip() for s in req_skills_str.split(",") if s.strip()
+            ]
+
+            matched_list = []
+            missing_list = []
+            score = 0.0
+
+            if required_skills_list:
+                cv_text_lower = extracted_text.lower()
+                cv_text_compact = re.sub(r"\s+", " ", cv_text_lower)
+                cv_text_nospace = re.sub(r"\s+", "", cv_text_lower)
+
+                for skill in required_skills_list:
+                    sk_lower = skill.lower()
+                    sk_nospace = sk_lower.replace(" ", "")
+                    if (
+                        sk_lower in cv_text_lower
+                        or sk_lower in cv_text_compact
+                        or sk_nospace in cv_text_nospace
+                    ):
+                        matched_list.append(skill)
+                    else:
+                        missing_list.append(skill)
+
+                score = round(
+                    (len(matched_list) / len(required_skills_list)) * 100.0, 1
+                )
+
+            matched_str = ", ".join(matched_list) if matched_list else "Không có"
+            missing_str = ", ".join(missing_list) if missing_list else "Không có"
+
+            app.write({
+                "cv_extracted_text": extracted_text,
+                "matching_score": score,
+                "matched_skills": matched_str,
+                "missing_skills": missing_str,
+            })
+
+            # Post a log in Chatter
+            body = Markup(
+                f"<b>Kết quả quét CV PDF kỹ năng:</b><br/>"
+                f"• Điểm phù hợp: <b>{score}%</b><br/>"
+                f"• Kỹ năng đạt được: <span style='color: green;'>{matched_str}</span><br/>"
+                f"• Kỹ năng còn thiếu: <span style='color: red;'>{missing_str}</span>"
+            )
+            app.message_post(body=body)
+
+        return True
+
     def action_send_interview_email(self):
         self.ensure_one()
         template = self.env.ref("recruitment.email_template_interview", raise_if_not_found=False)
@@ -202,12 +350,19 @@ class RecruitmentApplication(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         records._sync_cv_attachment()
+        for rec in records:
+            if rec.cv_file and rec.job_position_id:
+                rec.action_scan_cv()
         return records
 
     def write(self, vals):
         res = super().write(vals)
         if 'cv_file' in vals or 'cv_filename' in vals:
             self._sync_cv_attachment()
+        if 'cv_file' in vals or 'job_position_id' in vals:
+            for rec in self:
+                if rec.cv_file and rec.job_position_id:
+                    rec.action_scan_cv()
         return res
 
     @api.depends('candidate_id', 'job_position_id')

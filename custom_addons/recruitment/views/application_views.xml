@@ -11,6 +11,7 @@
                 <field name="name"/>
                 <field name="candidate_id"/>
                 <field name="job_position_id"/>
+                <field name="matching_score" widget="progressbar" string="Độ phù hợp (%)" optional="show"/>
                 <field name="application_date"/>
                 <field name="stage_id"/>
                 <field name="source"/>
@@ -34,6 +35,7 @@
                 <field name="job_position_id"/>
                 <field name="interviewer_user_id"/>
                 <field name="interview_date"/>
+                <field name="matching_score"/>
                 <field name="active"/>
                 <templates>
                     <t t-name="kanban-box">
@@ -45,8 +47,13 @@
                                 <div class="o_kanban_record_subtitle text-muted mb-1">
                                     <field name="candidate_id"/>
                                 </div>
-                                <div>
-                                    <span class="badge rounded-pill text-bg-info"><field name="job_position_id"/></span>
+                                <div class="d-flex align-items-center flex-wrap gap-1">
+                                    <span class="badge rounded-pill text-bg-info me-1"><field name="job_position_id"/></span>
+                                    <t t-if="record.matching_score.raw_value &gt; 0">
+                                        <span t-attf-class="badge rounded-pill #{record.matching_score.raw_value &gt;= 70 ? 'text-bg-success' : (record.matching_score.raw_value &gt;= 40 ? 'text-bg-warning' : 'text-bg-danger')}">
+                                            <i class="fa fa-check-circle me-1"/><t t-esc="record.matching_score.raw_value"/>% Matched
+                                        </span>
+                                    </t>
                                 </div>
                                 <div class="o_kanban_record_bottom mt-2">
                                     <div class="oe_kanban_bottom_left text-muted">
@@ -76,6 +83,11 @@
                 <field name="job_position_id"/>
                 <field name="interviewer_user_id"/>
                 <field name="stage_id"/>
+                <field name="matched_skills"/>
+                <filter string="Phù hợp cao (>= 70%)" name="high_match" domain="[('matching_score', '>=', 70)]"/>
+                <filter string="Phù hợp trung bình (40-69%)" name="mid_match" domain="[('matching_score', '>=', 40), ('matching_score', '&lt;', 70)]"/>
+                <filter string="Phù hợp thấp (&lt; 40%)" name="low_match" domain="[('matching_score', '&lt;', 40)]"/>
+                <separator/>
                 <filter string="Đang hoạt động" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Đã từ chối (Archived)" name="inactive" domain="[('active', '=', False)]"/>
                 <separator/>
@@ -96,6 +108,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="action_scan_cv" string="Quét kỹ năng CV" type="object" class="btn-info" invisible="not cv_file"/>
                     <button name="action_send_interview_email" string="Mời phỏng vấn" type="object" class="oe_highlight" invisible="not active"/>
                     <button name="action_send_offer_email" string="Mời nhận việc (Offer)" type="object" class="btn-success" invisible="not active"/>
                     <button name="action_open_refuse_wizard" string="Từ chối" type="object" class="btn-danger" invisible="not active"/>
@@ -124,13 +137,29 @@
                         </group>
                     </group>
 
+                    <!-- CV Skill Matching Result Box -->
+                    <group string="Kết quả Quét Kỹ năng CV" invisible="not cv_file">
+                        <group>
+                            <field name="matching_score" widget="progressbar"/>
+                        </group>
+                        <group>
+                            <field name="matched_skills" class="text-success fw-bold"/>
+                            <field name="missing_skills" class="text-danger fw-bold"/>
+                        </group>
+                    </group>
+
                     <notebook>
                         <!-- CV -->
-                        <page string="CV">
+                        <page string="CV File">
                             <group>
                                 <field name="cv_file" filename="cv_filename"/>
                                 <field name="cv_filename" invisible="1"/>
                             </group>
+                        </page>
+
+                        <!-- Extracted CV Text -->
+                        <page string="Văn bản bóc tách CV (Extracted Text)" invisible="not cv_file">
+                            <field name="cv_extracted_text" placeholder="Nội dung văn bản bóc tách từ file CV PDF..."/>
                         </page>
 
                         <!-- Notes -->
