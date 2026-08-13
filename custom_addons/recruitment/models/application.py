@@ -44,6 +44,13 @@ class RecruitmentApplication(models.Model):
         string="Offers",
     )
 
+    interviewer_user_id = fields.Many2one(
+        "res.users",
+        string="Interviewer",
+        tracking=True,
+        help="Assigned interviewer for this application",
+    )
+
     application_date = fields.Date(
         string="Application Date",
         default=fields.Date.today,
@@ -128,22 +135,17 @@ class RecruitmentApplication(models.Model):
     def action_send_offer_email(self):
         self.ensure_one()
         template = self.env.ref("recruitment.email_template_offer", raise_if_not_found=False)
-        if not template:
-            return False
-        ctx = {
-            'default_model': 'recruitment.application',
-            'default_res_ids': self.ids,
-            'default_template_id': template.id,
-            'default_composition_mode': 'comment',
-        }
         return {
+            'name': 'Soạn Thư Mời Nhận Việc (Job Offer)',
             'type': 'ir.actions.act_window',
             'view_mode': 'form',
-            'res_model': 'mail.compose.message',
-            'views': [(False, 'form')],
-            'view_id': False,
+            'res_model': 'recruitment.offer.wizard',
             'target': 'new',
-            'context': ctx,
+            'context': {
+                'default_application_id': self.id,
+                'default_template_id': template.id if template else False,
+                'default_proposed_salary': self.proposed_salary or 15000000.0,
+            },
         }
 
     def action_open_refuse_wizard(self):

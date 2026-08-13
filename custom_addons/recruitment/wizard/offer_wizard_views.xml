@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Offer Wizard Form View -->
+    <record id="view_recruitment_offer_wizard_form" model="ir.ui.view">
+        <field name="name">recruitment.offer.wizard.form</field>
+        <field name="model">recruitment.offer.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Soạn Thư Mời Nhận Việc &amp; Tạo Job Offer">
+                <sheet>
+                    <group>
+                        <group string="Thông tin Lương &amp; Ngày">
+                            <field name="application_id" readonly="1" options="{'no_open': True}"/>
+                            <field name="candidate_id"/>
+                            <field name="job_position_id"/>
+                            <field name="proposed_salary"/>
+                            <field name="salary_period"/>
+                            <field name="offer_date"/>
+                            <field name="start_date"/>
+                            <field name="expiration_date"/>
+                        </group>
+                        <group string="Template &amp; Tiêu đề Email">
+                            <field name="template_id" options="{'no_create': True}"/>
+                            <field name="subject"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Nội dung Email">
+                            <field name="body_html" widget="html"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_send_offer_and_create_record" string="Gửi Email &amp; Tạo Offer" type="object" class="btn-primary"/>
+                    <button string="Hủy bỏ" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

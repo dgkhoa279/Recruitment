@@ -146,8 +146,12 @@ class RecruitmentInterviewWizard(models.TransientModel):
 
         app = self.application_id
 
-        # 1. Update application interview_date
-        app.write({'interview_date': self.scheduled_date})
+        # 1. Update application interview_date and interviewer_user_id
+        assigned_user = self.interviewer_user_id or self.env.user
+        app.write({
+            'interview_date': self.scheduled_date,
+            'interviewer_user_id': assigned_user.id,
+        })
 
         # 2. Create Interview record
         unique_name = f"Interview - {app.candidate_id.name} - {fields.Datetime.to_string(self.scheduled_date)}"
@@ -165,8 +169,8 @@ class RecruitmentInterviewWizard(models.TransientModel):
             'status': 'scheduled',
         })
 
-        # 3. Move application to Interview stage if currently in New / Screening
-        interview_stage = self.env['recruitment.stage'].search([('name', '=ilike', 'Interview')], limit=1)
+        # 3. Move application to First Interview stage if currently in New / Screening
+        interview_stage = self.env['recruitment.stage'].search([('name', 'ilike', 'Interview')], limit=1)
         if interview_stage and app.stage_id != interview_stage:
             app.write({'stage_id': interview_stage.id})
 
