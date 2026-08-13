@@ -123,6 +123,10 @@ Vị trí ứng tuyển: Backend Developer
         self.assertEqual(result['job_position'], 'Backend Developer')
 
     def test_message_new_creates_candidate_and_application(self):
+        self.env['recruitment.job.position'].create({
+            'name': 'Python Developer',
+            'quantity': 2,
+        })
         msg_dict = {
             'subject': '[APPLICATION] Python Developer',
             'body': """
@@ -151,7 +155,24 @@ Vị trí ứng tuyển: Python Developer
         application_2 = self.env['recruitment.application'].message_new(msg_dict)
         self.assertEqual(application_2.candidate_id.id, application.candidate_id.id)
 
+    def test_non_existent_job_position_rejected(self):
+        """Kiểm tra email ứng tuyển vị trí không tồn tại trong danh mục sẽ bị từ chối hoàn toàn."""
+        msg_dict = {
+            'subject': '[APPLICATION] Non Existent Position 12345',
+            'body': 'Họ tên: Fake Candidate\nEmail: fake@gmail.com',
+            'attachments': [('CV.pdf', b'fake', 'application/pdf')]
+        }
+        app = self.env['recruitment.application'].message_new(msg_dict)
+        self.assertIsNone(app)
+
+        # Kiểm tra message_route cũng bỏ qua
+        routes = self.env['recruitment.application'].message_route(None, msg_dict)
+        self.assertEqual(routes, [])
+
     def test_multiple_applications_different_cvs(self):
+        self.env['recruitment.job.position'].create({'name': 'Backend Developer', 'quantity': 1})
+        self.env['recruitment.job.position'].create({'name': 'DevOps Engineer', 'quantity': 1})
+
         msg_dict_1 = {
             'subject': '[APPLICATION] Backend Developer',
             'body': 'Họ tên: Lê Văn C\nEmail: levanc@gmail.com\nSố điện thoại: 0911223344',
@@ -176,6 +197,7 @@ Vị trí ứng tuyển: Python Developer
         self.assertEqual(app_2.cv_filename, 'CV_DevOps.pdf')
 
     def test_refuse_wizard_and_email_sending(self):
+        self.env['recruitment.job.position'].create({'name': 'Tester', 'quantity': 1})
         msg_dict = {
             'subject': '[APPLICATION] Tester',
             'body': 'Họ tên: Phạm Văn D\nEmail: phamvand@gmail.com\nSố điện thoại: 0933445566',
