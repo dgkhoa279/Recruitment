@@ -380,18 +380,32 @@ class RecruitmentApplication(models.Model):
     @api.model
     def message_route(self, message, message_dict, model=None, thread_id=None, custom_values=None):
         """
-        Lọc email đầu vào: Chỉ điều hướng các email có tiêu đề chứa [APPLICATION].
-        Tất cả các email khác (spam, thông báo...) sẽ bị bỏ qua hoàn toàn, không tạo bản ghi rác.
+        Lọc email đầu vào: Chỉ điều hướng các email có tiêu đề chứa [APPLICATION] VÀ
+        vị trí tuyển dụng trong tiêu đề phải tồn tại sẵn trong hệ thống công ty.
+        Tất cả các email rác hoặc ứng tuyển vị trí không tồn tại sẽ bị bỏ qua hoàn toàn.
         """
         subject = message_dict.get('subject', '') or ''
         if '[APPLICATION]' not in subject.upper():
             return []
+
+        match_subj = re.search(r'\[APPLICATION\]\s*(.*)', subject, re.IGNORECASE)
+        if match_subj:
+            job_pos_name = match_subj.group(1).strip()
+            if job_pos_name:
+                job_pos = self.env['recruitment.job.position'].search(
+                    [('name', '=ilike', job_pos_name)], limit=1
+                )
+                if not job_pos:
+                    _logger.warning("Bỏ qua email ứng tuyển cho vị trí chưa có trong danh mục công ty: '%s'", job_pos_name)
+                    return []
+
         return super().message_route(message, message_dict, model=model, thread_id=thread_id, custom_values=custom_values)
 
     @api.model
     def message_new(self, msg_dict, custom_values=None):
         """
         Tự động kiểm tra / tạo Candidate và Application khi nhận Email ứng tuyển.
+        Yêu cầu Vị trí tuyển dụng (Job Position) phải tồn tại sẵn trong danh mục công ty.
         """
         if custom_values is None:
             custom_values = {}
@@ -406,15 +420,14 @@ class RecruitmentApplication(models.Model):
         job_position_name = parsed_data['job_position']
         cv_attachment = parsed_data['cv_attachment']
 
-        # 1. Tìm hoặc tạo Vị trí tuyển dụng (Job Position)
+        # 1. Tìm Vị trí tuyển dụng (Job Position) - Không tự tạo rác nếu không tìm thấy
         job_position = self.env['recruitment.job.position'].search(
             [('name', '=ilike', job_position_name)],
             limit=1,
         )
         if not job_position:
-            job_position = self.env['recruitment.job.position'].create({
-                'name': job_position_name,
-            })
+            _logger.warning("Email ứng tuyển bị từ chối do vị trí tuyển dụng '%s' không tồn tại.", job_position_name)
+            return None
 
         # Chuẩn bị dữ liệu nhị phân CV nếu có file đính kèm
         cv_binary = None
