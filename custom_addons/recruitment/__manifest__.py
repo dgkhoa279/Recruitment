@@ -18,6 +18,7 @@ Recruitment management module for job positions and applicants.
         'data/mail_template_data.xml',
         'views/views.xml',
         'views/templates.xml',
+        'views/dashboard_views.xml',
         'views/candidate_views.xml',
         'views/job_position_views.xml',
         'views/application_views.xml',
@@ -35,4 +36,3 @@ Recruitment management module for job positions and applicants.
     'application': True,
     'installable': True,
 }
-

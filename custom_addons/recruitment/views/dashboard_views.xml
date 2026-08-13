@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Recruitment Dashboard Action (Graph & Pivot Analytics View) -->
+    <record id="action_recruitment_dashboard_app" model="ir.actions.act_window">
+        <field name="name">Dashboard Phân tích Tuyển dụng</field>
+        <field name="res_model">recruitment.application</field>
+        <field name="view_mode">graph,pivot,kanban,tree,form</field>
+        <field name="search_view_id" ref="view_application_search"/>
+        <field name="context">{'search_default_groupby_stage': 1}</field>
+    </record>
+
+    <!-- Dashboard Top Menu Item (Sequence 5, placed first in Recruitment menu) -->
+    <menuitem
+        id="menu_recruitment_dashboard"
+        name="Dashboard"
+        parent="menu_recruitment_root"
+        action="action_recruitment_dashboard_app"
+        sequence="5"
+    />
+
+</odoo>
