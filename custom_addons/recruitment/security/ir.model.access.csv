@@ -8,3 +8,4 @@ access_offer_user,recruitment.offer.user,model_recruitment_offer,base.group_user
 access_refuse_reason_user,recruitment.refuse.reason.user,model_recruitment_refuse_reason,base.group_user,1,1,1,1
 access_refuse_wizard_user,recruitment.refuse.wizard.user,model_recruitment_refuse_wizard,base.group_user,1,1,1,1
 access_interview_wizard_user,recruitment.interview.wizard.user,model_recruitment_interview_wizard,base.group_user,1,1,1,1
+access_offer_wizard_user,recruitment.offer.wizard.user,model_recruitment_offer_wizard,base.group_user,1,1,1,1

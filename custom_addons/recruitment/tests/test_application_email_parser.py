@@ -209,9 +209,23 @@ Vị trí ứng tuyển: Python Developer
         self.assertTrue(app.activity_ids)
         self.assertIn("Phỏng vấn ứng viên", app.activity_ids[0].summary)
 
-        # 2. Test Offer Action
+        # 2. Test Offer Action & Wizard
         res_offer = app.action_send_offer_email()
-        self.assertEqual(res_offer['res_model'], 'mail.compose.message')
+        self.assertEqual(res_offer['res_model'], 'recruitment.offer.wizard')
+
+        offer_wizard = self.env['recruitment.offer.wizard'].create({
+            'application_id': app.id,
+            'proposed_salary': 25000000.0,
+            'salary_period': 'monthly',
+        })
+        offer_wizard._onchange_offer_fields()
+        self.assertIn('25,000,000', offer_wizard.body_html)
+
+        offer_wizard.action_send_offer_and_create_record()
+        offers = self.env['recruitment.offer'].search([('application_id', '=', app.id)])
+        self.assertTrue(offers)
+        self.assertEqual(offers.proposed_salary, 25000000.0)
+        self.assertEqual(offers.status, 'sent')
 
         # 3. Test Refuse Wizard
         reason = self.env.ref('recruitment.refuse_reason_skills')

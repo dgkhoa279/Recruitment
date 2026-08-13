@@ -27,6 +27,7 @@ Recruitment management module for job positions and applicants.
         'views/refuse_reason_views.xml',
         'wizard/refuse_wizard_views.xml',
         'wizard/interview_wizard_views.xml',
+        'wizard/offer_wizard_views.xml',
     ],
     'demo': [
         'demo/demo.xml',

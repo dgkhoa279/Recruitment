@@ -2,22 +2,66 @@
 
 <odoo>
 
-    <!-- Application List -->
+    <!-- Application List (Tree View) -->
     <record id="view_application_list" model="ir.ui.view">
         <field name="name">recruitment.application.list</field>
         <field name="model">recruitment.application</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree string="Applications">
                 <field name="name"/>
                 <field name="candidate_id"/>
                 <field name="job_position_id"/>
                 <field name="application_date"/>
                 <field name="stage_id"/>
                 <field name="source"/>
+                <field name="interviewer_user_id" widget="many2one_avatar_user" optional="show"/>
                 <field name="interview_date"/>
                 <field name="refuse_reason_id" optional="hide"/>
                 <field name="active" optional="hide"/>
             </tree>
+        </field>
+    </record>
+
+    <!-- Application Kanban View -->
+    <record id="view_application_kanban" model="ir.ui.view">
+        <field name="name">recruitment.application.kanban</field>
+        <field name="model">recruitment.application</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" class="o_kanban_small_column o_kanban_applicant" sample="1">
+                <field name="stage_id"/>
+                <field name="name"/>
+                <field name="candidate_id"/>
+                <field name="job_position_id"/>
+                <field name="interviewer_user_id"/>
+                <field name="interview_date"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click oe_kanban_card">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_title mb-1">
+                                    <strong><field name="name"/></strong>
+                                </div>
+                                <div class="o_kanban_record_subtitle text-muted mb-1">
+                                    <field name="candidate_id"/>
+                                </div>
+                                <div>
+                                    <span class="badge rounded-pill text-bg-info"><field name="job_position_id"/></span>
+                                </div>
+                                <div class="o_kanban_record_bottom mt-2">
+                                    <div class="oe_kanban_bottom_left text-muted">
+                                        <i class="fa fa-calendar me-1" title="Interview Date"/> <field name="interview_date"/>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <field name="activity_ids" widget="kanban_activity"/>
+                                        <field name="interviewer_user_id" widget="many2one_avatar_user" class="ms-1"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
         </field>
     </record>
 
@@ -30,12 +74,14 @@
                 <field name="name"/>
                 <field name="candidate_id"/>
                 <field name="job_position_id"/>
+                <field name="interviewer_user_id"/>
                 <field name="stage_id"/>
                 <filter string="Đang hoạt động" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Đã từ chối (Archived)" name="inactive" domain="[('active', '=', False)]"/>
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter string="Trạng thái (Stage)" name="groupby_stage" context="{'group_by': 'stage_id'}"/>
+                    <filter string="Người phỏng vấn (Interviewer)" name="groupby_interviewer" context="{'group_by': 'interviewer_user_id'}"/>
                     <filter string="Vị trí tuyển dụng" name="groupby_job" context="{'group_by': 'job_position_id'}"/>
                     <filter string="Lý do từ chối" name="groupby_refuse_reason" context="{'group_by': 'refuse_reason_id'}"/>
                 </group>
@@ -43,8 +89,7 @@
         </field>
     </record>
 
-
-    <!-- Application Form -->
+    <!-- Application Form View -->
     <record id="view_application_form" model="ir.ui.view">
         <field name="name">recruitment.application.form</field>
         <field name="model">recruitment.application</field>
@@ -72,6 +117,7 @@
 
                         <group>
                             <field name="source"/>
+                            <field name="interviewer_user_id" options="{'no_create': True}"/>
                             <field name="interview_date"/>
                             <field name="refuse_reason_id" invisible="active"/>
                             <field name="active"/>
@@ -130,15 +176,14 @@
         </field>
     </record>
 
-
     <!-- Application Action -->
     <record id="action_application" model="ir.actions.act_window">
         <field name="name">Applications</field>
         <field name="res_model">recruitment.application</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,tree,form</field>
         <field name="search_view_id" ref="view_application_search"/>
+        <field name="context">{'search_default_groupby_stage': 1}</field>
     </record>
-
 
     <!-- Application Menu -->
     <menuitem
