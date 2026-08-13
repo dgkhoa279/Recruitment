@@ -55,13 +55,21 @@
     </record>
 
 
+    <!-- Configuration Menu -->
+    <menuitem
+        id="menu_recruitment_configuration"
+        name="Configuration"
+        parent="menu_recruitment_root"
+        sequence="90"
+    />
+
     <!-- Stage Menu -->
     <menuitem
         id="menu_stage"
         name="Stages"
-        parent="menu_recruitment_root"
+        parent="menu_recruitment_configuration"
         action="action_stage"
-        sequence="40"
+        sequence="10"
     />
 
 </odoo>
