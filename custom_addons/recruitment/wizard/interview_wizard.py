@@ -292,7 +292,9 @@ class RecruitmentInterviewWizard(models.TransientModel):
         })
 
         # 3. Move application to First Interview stage if currently in New / Screening
-        interview_stage = self.env['recruitment.stage'].search([('name', 'ilike', 'Interview')], limit=1)
+        interview_stage = self.env.ref('recruitment.stage_first_interview', raise_if_not_found=False)
+        if not interview_stage:
+            interview_stage = self.env['recruitment.stage'].search([('name', '=ilike', 'First Interview')], limit=1)
         if interview_stage and app.stage_id != interview_stage:
             app.write({'stage_id': interview_stage.id})
 
