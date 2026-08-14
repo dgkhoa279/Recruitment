@@ -13,6 +13,7 @@
                 <field name="job_position_id"/>
                 <field name="scheduled_date"/>
                 <field name="interview_type"/>
+                <field name="interview_round"/>
                 <field name="interviewer"/>
                 <field name="status"/>
                 <field name="result"/>
@@ -41,6 +42,7 @@
                         <group>
                             <field name="scheduled_date"/>
                             <field name="interview_type"/>
+                            <field name="interview_round"/>
                             <field name="location"/>
                             <field name="interviewer"/>
                         </group>

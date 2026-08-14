@@ -48,6 +48,15 @@ class RecruitmentInterviewWizard(models.TransientModel):
         default="online",
         required=True,
     )
+    interview_round = fields.Selection(
+        [
+            ("round_1", "Vòng 1 (First Interview)"),
+            ("round_2", "Vòng 2 (Second Interview)"),
+        ],
+        string="Vòng phỏng vấn",
+        default="round_1",
+        required=True,
+    )
     location = fields.Char(
         string="Location / Meeting URL",
         required=True,
@@ -67,6 +76,17 @@ class RecruitmentInterviewWizard(models.TransientModel):
     )
 
     COMPANY_ADDRESS = "111A Pasteur, Phường Sài Gòn, TP. Hồ Chí Minh"
+
+    @api.onchange('application_id')
+    def _onchange_application_id(self):
+        if self.application_id:
+            existing_interviews = self.env['recruitment.interview'].search([('application_id', '=', self.application_id.id)])
+            first_stage = self.env.ref('recruitment.stage_first_interview', raise_if_not_found=False)
+            if existing_interviews or (first_stage and self.application_id.stage_id == first_stage):
+                self.interview_round = 'round_2'
+            else:
+                self.interview_round = 'round_1'
+        self._onchange_interview_fields()
 
     @api.onchange('interview_type')
     def _onchange_interview_type(self):
@@ -102,6 +122,10 @@ class RecruitmentInterviewWizard(models.TransientModel):
                 location_fmt = location_info
 
             date_str = fields.Datetime.to_string(rec.scheduled_date) if rec.scheduled_date else "Sẽ thông báo sau"
+            round_label = "Vòng 1 (Sơ tuyển)" if rec.interview_round == 'round_1' else "Vòng 2 (Chuyên sâu)"
+
+            if not rec.subject:
+                rec.subject = f"Thư mời phỏng vấn {round_label} - Vị trí {job_name}"
 
             if not rec.subject:
                 rec.subject = f"Thư mời phỏng vấn vị trí {job_name}"
@@ -112,6 +136,9 @@ class RecruitmentInterviewWizard(models.TransientModel):
                     <p style="margin: 0px; padding: 0px; font-size: 13px;">
                         Chào <strong>{candidate_name}</strong>,<br/><br/>
                         Cảm ơn bạn đã quan tâm và nộp hồ sơ ứng tuyển vào vị trí <strong>{job_name}</strong> tại công ty chúng tôi.<br/><br/>
+                        Chúng tôi trân trọng mời bạn tham dự buổi <strong>{round_label}</strong>.<br/><br/>
+                        <strong>Thông tin phỏng vấn:</strong><br/>
+                        - <strong>Vòng phỏng vấn:</strong> {round_label}<br/>
                         Qua quá trình xem xét hồ sơ, chúng tôi trân trọng mời bạn tham dự buổi phỏng vấn.<br/><br/>
                         <strong>Thông tin phỏng vấn:</strong><br/>
                         - <strong>Thời gian:</strong> {date_str}<br/>
@@ -125,6 +152,7 @@ class RecruitmentInterviewWizard(models.TransientModel):
                 </div>
                 """
 
+    @api.onchange('application_id', 'interviewer', 'interviewer_user_id', 'scheduled_date', 'interview_type', 'interview_round', 'location', 'template_id')
     @api.onchange('application_id', 'interviewer', 'interviewer_user_id', 'scheduled_date', 'interview_type', 'location', 'template_id')
     def _onchange_interview_fields(self):
         if not self.application_id:
@@ -139,6 +167,9 @@ class RecruitmentInterviewWizard(models.TransientModel):
             location_fmt = location_info
 
         date_str = fields.Datetime.to_string(self.scheduled_date) if self.scheduled_date else "Sẽ thông báo sau"
+        round_label = "Vòng 1 (Sơ tuyển)" if self.interview_round == 'round_1' else "Vòng 2 (Chuyên sâu)"
+
+        self.subject = f"Thư mời phỏng vấn {round_label} - Vị trí {job_name}"
 
         self.subject = f"Thư mời phỏng vấn vị trí {job_name}"
         self.body_html = f"""
@@ -146,6 +177,9 @@ class RecruitmentInterviewWizard(models.TransientModel):
             <p style="margin: 0px; padding: 0px; font-size: 13px;">
                 Chào <strong>{candidate_name}</strong>,<br/><br/>
                 Cảm ơn bạn đã quan tâm và nộp hồ sơ ứng tuyển vào vị trí <strong>{job_name}</strong> tại công ty chúng tôi.<br/><br/>
+                Chúng tôi trân trọng mời bạn tham dự buổi <strong>{round_label}</strong>.<br/><br/>
+                <strong>Thông tin phỏng vấn:</strong><br/>
+                - <strong>Vòng phỏng vấn:</strong> {round_label}<br/>
                 Qua quá trình xem xét hồ sơ, chúng tôi trân trọng mời bạn tham dự buổi phỏng vấn.<br/><br/>
                 <strong>Thông tin phỏng vấn:</strong><br/>
                 - <strong>Thời gian:</strong> {date_str}<br/>
@@ -173,6 +207,7 @@ class RecruitmentInterviewWizard(models.TransientModel):
 
         _logger = logging.getLogger(__name__)
 
+        access_token = None
         # 1. Tìm Google OAuth Access Token từ Google Calendar / Gmail OAuth Server
         access_token = None
 
@@ -262,6 +297,9 @@ class RecruitmentInterviewWizard(models.TransientModel):
 
     def action_send_mail_and_create_interview(self):
         self.ensure_one()
+        app = self.application_id
+        if not app:
+            raise ValidationError("Không tìm thấy Đơn ứng tuyển liên quan.")
 
         if self.scheduled_date < fields.Datetime.now():
             raise ValidationError("Ngày giờ phỏng vấn không được chọn ở quá khứ.")
@@ -276,6 +314,8 @@ class RecruitmentInterviewWizard(models.TransientModel):
         })
 
         # 2. Create Interview record
+        round_str = "Vòng 1" if self.interview_round == 'round_1' else "Vòng 2"
+        unique_name = f"Interview ({round_str}) - {app.candidate_id.name} - {fields.Datetime.to_string(self.scheduled_date)}"
         unique_name = f"Interview - {app.candidate_id.name} - {fields.Datetime.to_string(self.scheduled_date)}"
         existing = self.env['recruitment.interview'].search([('name', '=', unique_name)], limit=1)
         if existing:
@@ -286,11 +326,24 @@ class RecruitmentInterviewWizard(models.TransientModel):
             'application_id': app.id,
             'scheduled_date': self.scheduled_date,
             'interview_type': self.interview_type,
+            'interview_round': self.interview_round,
             'location': self.location,
             'interviewer': self.interviewer,
             'status': 'scheduled',
         })
 
+        # 3. Move application to First Interview or Second Interview stage based on interview_round
+        if self.interview_round == 'round_2':
+            stage_target = self.env.ref('recruitment.stage_second_interview', raise_if_not_found=False)
+            if not stage_target:
+                stage_target = self.env['recruitment.stage'].search([('name', '=ilike', 'Second Interview')], limit=1)
+        else:
+            stage_target = self.env.ref('recruitment.stage_first_interview', raise_if_not_found=False)
+            if not stage_target:
+                stage_target = self.env['recruitment.stage'].search([('name', '=ilike', 'First Interview')], limit=1)
+
+        if stage_target and app.stage_id != stage_target:
+            app.write({'stage_id': stage_target.id})
         # 3. Move application to First Interview stage if currently in New / Screening
         interview_stage = self.env.ref('recruitment.stage_first_interview', raise_if_not_found=False)
         if not interview_stage:
