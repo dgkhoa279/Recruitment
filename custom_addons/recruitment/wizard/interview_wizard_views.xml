@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Interview Wizard Form View -->
+    <record id="view_recruitment_interview_wizard_form" model="ir.ui.view">
+        <field name="name">recruitment.interview.wizard.form</field>
+        <field name="model">recruitment.interview.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Soạn Thư Mời &amp; Đặt Lịch Phỏng Vấn">
+                <sheet>
+                    <group>
+                        <group string="Thông tin Lịch Phỏng Vấn">
+                            <field name="application_id" readonly="1" options="{'no_open': True}"/>
+                            <field name="candidate_id"/>
+                            <field name="job_position_id"/>
+                            <field name="interviewer_user_id" options="{'no_create': True}"/>
+                            <field name="interviewer" placeholder="Ví dụ: Nguyễn Văn A (Tech Lead)"/>
+                            <field name="scheduled_date"/>
+                            <field name="interview_type"/>
+                            <field name="interview_round"/>
+                            <label for="location"/>
+                            <div class="o_row">
+                                <field name="location" placeholder="Ví dụ: https://meet.google.com/eoy-mikq-ocb hoặc 111A Pasteur, Phường Sài Gòn"/>
+                                <button name="action_generate_google_meet_link" string="Tạo link Google Meet" type="object" class="btn btn-sm btn-outline-primary ms-2" icon="fa-video-camera" help="Tự động gọi Google API để khởi tạo phòng họp Google Meet dùng sau"/>
+                            </div>
+                        </group>
+                        <group string="Template &amp; Tiêu đề Email">
+                            <field name="template_id" options="{'no_create': True}"/>
+                            <field name="subject"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Nội dung Email">
+                            <field name="body_html" widget="html"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_send_mail_and_create_interview" string="Gửi Email &amp; Tạo Lịch Phỏng Vấn" type="object" class="btn-primary"/>
+                    <button string="Hủy bỏ" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

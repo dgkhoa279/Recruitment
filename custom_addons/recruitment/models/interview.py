@@ -62,6 +62,16 @@ class RecruitmentInterview(models.Model):
         required=True,
     )
 
+    interview_round = fields.Selection(
+        [
+            ("round_1", "Vòng 1 (First Interview)"),
+            ("round_2", "Vòng 2 (Second Interview)"),
+        ],
+        string="Vòng phỏng vấn",
+        default="round_1",
+        required=True,
+    )
+
     location = fields.Char(
         string="Location",
     )
