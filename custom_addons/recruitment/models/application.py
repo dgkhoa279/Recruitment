@@ -309,6 +309,17 @@ class RecruitmentApplication(models.Model):
             },
         }
 
+    def action_restore_application(self):
+        """
+        Khôi phục lại Đơn ứng tuyển đã bị Từ chối (Archived).
+        Kích hoạt lại active = True và xóa bỏ Lý do từ chối.
+        """
+        for app in self:
+            app.write({
+                'active': True,
+                'refuse_reason_id': False,
+            })
+
     @api.onchange('candidate_id')
     def _onchange_candidate_id(self):
         for record in self:

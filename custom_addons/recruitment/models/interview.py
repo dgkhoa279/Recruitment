@@ -238,16 +238,9 @@ class RecruitmentInterview(models.Model):
 
             interviews = application.interview_ids
 
-            # Nếu có bất kỳ Interview nào Fail -> Chuyển stage sang Rejected
+            # Nếu có bất kỳ Interview nào Fail -> Lưu trữ hồ sơ (active = False)
             if any(item.result == "fail" for item in interviews):
-                rejected_stage = self.env["recruitment.stage"].search(
-                    [("name", "=ilike", "Rejected")],
-                    limit=1,
-                )
-
-                if rejected_stage:
-                    application.stage_id = rejected_stage
-
+                application.write({'active': False})
                 continue
 
             # Nếu vẫn còn Interview Pending

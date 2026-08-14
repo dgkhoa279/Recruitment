@@ -193,12 +193,7 @@ class RecruitmentOffer(models.Model):
                 if hired_stage:
                     application.stage_id = hired_stage
             elif offer.status == "rejected":
-                rejected_stage = self.env["recruitment.stage"].search(
-                    [("name", "=ilike", "Rejected")],
-                    limit=1,
-                )
-                if rejected_stage:
-                    application.stage_id = rejected_stage
+                application.write({'active': False})
 
     @api.model_create_multi
     def create(self, vals_list):

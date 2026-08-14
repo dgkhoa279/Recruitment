@@ -31,15 +31,11 @@ class RecruitmentRefuseWizard(models.TransientModel):
             self.template_id = self.refuse_reason_id.template_id
 
     def action_refuse_reason_apply(self):
-        rejected_stage = self.env['recruitment.stage'].search([('name', '=ilike', 'Rejected')], limit=1)
         for application in self.application_ids:
-            vals = {
+            application.write({
                 'refuse_reason_id': self.refuse_reason_id.id,
                 'active': False,
-            }
-            if rejected_stage:
-                vals['stage_id'] = rejected_stage.id
-            application.write(vals)
+            })
             if self.send_email and self.template_id:
                 self.template_id.send_mail(
                     application.id,
