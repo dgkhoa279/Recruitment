@@ -127,6 +127,9 @@ class RecruitmentInterviewWizard(models.TransientModel):
             if not rec.subject:
                 rec.subject = f"Thư mời phỏng vấn {round_label} - Vị trí {job_name}"
 
+            if not rec.subject:
+                rec.subject = f"Thư mời phỏng vấn vị trí {job_name}"
+
             if not rec.body_html:
                 rec.body_html = f"""
                 <div style="margin: 0px; padding: 0px;">
@@ -136,6 +139,8 @@ class RecruitmentInterviewWizard(models.TransientModel):
                         Chúng tôi trân trọng mời bạn tham dự buổi <strong>{round_label}</strong>.<br/><br/>
                         <strong>Thông tin phỏng vấn:</strong><br/>
                         - <strong>Vòng phỏng vấn:</strong> {round_label}<br/>
+                        Qua quá trình xem xét hồ sơ, chúng tôi trân trọng mời bạn tham dự buổi phỏng vấn.<br/><br/>
+                        <strong>Thông tin phỏng vấn:</strong><br/>
                         - <strong>Thời gian:</strong> {date_str}<br/>
                         - <strong>Hình thức:</strong> {rec.interview_type.capitalize() if rec.interview_type else 'Online'}<br/>
                         - <strong>Người phỏng vấn:</strong> {interviewer_name}<br/>
@@ -148,6 +153,7 @@ class RecruitmentInterviewWizard(models.TransientModel):
                 """
 
     @api.onchange('application_id', 'interviewer', 'interviewer_user_id', 'scheduled_date', 'interview_type', 'interview_round', 'location', 'template_id')
+    @api.onchange('application_id', 'interviewer', 'interviewer_user_id', 'scheduled_date', 'interview_type', 'location', 'template_id')
     def _onchange_interview_fields(self):
         if not self.application_id:
             return
@@ -164,6 +170,8 @@ class RecruitmentInterviewWizard(models.TransientModel):
         round_label = "Vòng 1 (Sơ tuyển)" if self.interview_round == 'round_1' else "Vòng 2 (Chuyên sâu)"
 
         self.subject = f"Thư mời phỏng vấn {round_label} - Vị trí {job_name}"
+
+        self.subject = f"Thư mời phỏng vấn vị trí {job_name}"
         self.body_html = f"""
         <div style="margin: 0px; padding: 0px;">
             <p style="margin: 0px; padding: 0px; font-size: 13px;">
@@ -172,6 +180,8 @@ class RecruitmentInterviewWizard(models.TransientModel):
                 Chúng tôi trân trọng mời bạn tham dự buổi <strong>{round_label}</strong>.<br/><br/>
                 <strong>Thông tin phỏng vấn:</strong><br/>
                 - <strong>Vòng phỏng vấn:</strong> {round_label}<br/>
+                Qua quá trình xem xét hồ sơ, chúng tôi trân trọng mời bạn tham dự buổi phỏng vấn.<br/><br/>
+                <strong>Thông tin phỏng vấn:</strong><br/>
                 - <strong>Thời gian:</strong> {date_str}<br/>
                 - <strong>Hình thức:</strong> {self.interview_type.capitalize() if self.interview_type else 'Online'}<br/>
                 - <strong>Người phỏng vấn:</strong> {interviewer_name}<br/>
@@ -184,6 +194,10 @@ class RecruitmentInterviewWizard(models.TransientModel):
         """
 
     def action_generate_google_meet_link(self):
+        """
+        Tự động gọi Google Calendar API để tạo phòng họp dùng sau (Google Meet) trên Google Cloud
+        và điền trực tiếp link thật (ví dụ: https://meet.google.com/eoy-mikq-ocb) vào ô location.
+        """
         self.ensure_one()
         import json
         import requests
@@ -194,6 +208,9 @@ class RecruitmentInterviewWizard(models.TransientModel):
         _logger = logging.getLogger(__name__)
 
         access_token = None
+        # 1. Tìm Google OAuth Access Token từ Google Calendar / Gmail OAuth Server
+        access_token = None
+
         user = self.env.user
         if hasattr(user, 'google_calendar_account_id') and user.google_calendar_account_id and user.google_calendar_account_id.calendar_token:
             access_token = user.google_calendar_account_id.calendar_token
@@ -218,6 +235,7 @@ class RecruitmentInterviewWizard(models.TransientModel):
         job_name = self.application_id.job_position_id.name if self.application_id and self.application_id.job_position_id else "Tuyển dụng"
         scheduled_dt = self.scheduled_date or fields.Datetime.now()
 
+        # 2. Gọi Google Calendar API để sinh phòng họp Google Meet dùng sau
         if access_token:
             try:
                 start_iso = scheduled_dt.isoformat() + 'Z'
@@ -266,6 +284,7 @@ class RecruitmentInterviewWizard(models.TransientModel):
             except Exception as e:
                 _logger.warning("Lỗi khi gọi Google Calendar API: %s", str(e))
 
+        # 3. Nếu chưa lấy được token hoặc API bị từ chối, báo ValidationError với hướng dẫn chi tiết
         raise ValidationError(
             "Không thể tự động gọi Google Calendar API để tạo phòng họp Google Meet"
         )
@@ -285,6 +304,8 @@ class RecruitmentInterviewWizard(models.TransientModel):
         if self.scheduled_date < fields.Datetime.now():
             raise ValidationError("Ngày giờ phỏng vấn không được chọn ở quá khứ.")
 
+        app = self.application_id
+
         # 1. Update application interview_date and interviewer_user_id
         assigned_user = self.interviewer_user_id or self.env.user
         app.write({
@@ -295,6 +316,7 @@ class RecruitmentInterviewWizard(models.TransientModel):
         # 2. Create Interview record
         round_str = "Vòng 1" if self.interview_round == 'round_1' else "Vòng 2"
         unique_name = f"Interview ({round_str}) - {app.candidate_id.name} - {fields.Datetime.to_string(self.scheduled_date)}"
+        unique_name = f"Interview - {app.candidate_id.name} - {fields.Datetime.to_string(self.scheduled_date)}"
         existing = self.env['recruitment.interview'].search([('name', '=', unique_name)], limit=1)
         if existing:
             unique_name = f"{unique_name} ({fields.Datetime.now().strftime('%H%M%S')})"
@@ -322,6 +344,12 @@ class RecruitmentInterviewWizard(models.TransientModel):
 
         if stage_target and app.stage_id != stage_target:
             app.write({'stage_id': stage_target.id})
+        # 3. Move application to First Interview stage if currently in New / Screening
+        interview_stage = self.env.ref('recruitment.stage_first_interview', raise_if_not_found=False)
+        if not interview_stage:
+            interview_stage = self.env['recruitment.stage'].search([('name', '=ilike', 'First Interview')], limit=1)
+        if interview_stage and app.stage_id != interview_stage:
+            app.write({'stage_id': interview_stage.id})
 
         # 4. Send Email to candidate
         mail_values = {

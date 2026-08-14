@@ -7,48 +7,112 @@
         <field name="name">recruitment.job.position.list</field>
         <field name="model">recruitment.job.position</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree string="Vị trí tuyển dụng">
                 <field name="name"/>
+                <field name="job_level"/>
+                <field name="employment_type"/>
+                <field name="workplace_type"/>
                 <field name="quantity"/>
+                <field name="hired_quantity"/>
+                <field name="hr_responsible_id" widget="many2one_avatar_user"/>
                 <field name="deadline"/>
                 <field name="active"/>
             </tree>
         </field>
     </record>
 
-
     <!-- Form View -->
     <record id="view_job_position_form" model="ir.ui.view">
         <field name="name">recruitment.job.position.form</field>
         <field name="model">recruitment.job.position</field>
         <field name="arch" type="xml">
-            <form>
+            <form string="Vị trí tuyển dụng">
                 <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Tên Vị trí Tuyển dụng"/>
+                        <h1>
+                            <field name="name" placeholder="Ví dụ: Senior Python Developer"/>
+                        </h1>
+                    </div>
 
                     <group>
-                        <field name="name"/>
-                        <field name="quantity"/>
-                        <field name="deadline"/>
-                        <field name="active"/>
+                        <group string="Thông tin Tuyển dụng">
+                            <field name="job_level"/>
+                            <field name="employment_type"/>
+                            <field name="workplace_type"/>
+                            <field name="hr_responsible_id" options="{'no_create': True}"/>
+                        </group>
+
+                        <group string="Chỉ tiêu &amp; Thời hạn">
+                            <field name="quantity"/>
+                            <field name="hired_quantity"/>
+                            <field name="deadline"/>
+                            <field name="active"/>
+                        </group>
                     </group>
 
-                    <group>
-                        <field name="description"/>
+                    <group string="Yêu cầu Kỹ năng &amp; Lương ngân sách">
+                        <group>
+                            <field name="required_skills" placeholder="VD: Python, Odoo, HTML, CSS, SQL"/>
+                            <field name="min_experience_years"/>
+                        </group>
+                        <group>
+                            <field name="salary_min"/>
+                            <field name="salary_max"/>
+                        </group>
                     </group>
+
+                    <notebook>
+                        <page string="Mô tả công việc (JD)">
+                            <field name="description" placeholder="Nhập mô tả chi tiết công việc, nhiệm vụ chính và quyền lợi..."/>
+                        </page>
+
+                        <page string="Danh sách Đơn ứng tuyển">
+                            <field name="application_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="candidate_id"/>
+                                    <field name="application_date"/>
+                                    <field name="stage_id"/>
+                                    <field name="interviewer_user_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
 
                 </sheet>
             </form>
         </field>
     </record>
 
+    <!-- Search View -->
+    <record id="view_job_position_search" model="ir.ui.view">
+        <field name="name">recruitment.job.position.search</field>
+        <field name="model">recruitment.job.position</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="required_skills"/>
+                <field name="hr_responsible_id"/>
+                <filter string="Đang hoạt động" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Đã đóng" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Cấp bậc (Level)" name="groupby_level" context="{'group_by': 'job_level'}"/>
+                    <filter string="Loại hình (Type)" name="groupby_type" context="{'group_by': 'employment_type'}"/>
+                    <filter string="Mô hình (Workplace)" name="groupby_workplace" context="{'group_by': 'workplace_type'}"/>
+                    <filter string="HR phụ trách" name="groupby_hr" context="{'group_by': 'hr_responsible_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
 
     <!-- Action -->
     <record id="action_job_position" model="ir.actions.act_window">
         <field name="name">Job Positions</field>
         <field name="res_model">recruitment.job.position</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_job_position_search"/>
     </record>
-
 
     <!-- Menu -->
     <menuitem

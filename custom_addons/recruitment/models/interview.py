@@ -266,10 +266,6 @@ class RecruitmentInterview(models.Model):
                 if offer_stage:
                     application.stage_id = offer_stage
 
-    @api.onchange("result")
-    def _onchange_result(self):
-        self._update_application_stage()
-
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
