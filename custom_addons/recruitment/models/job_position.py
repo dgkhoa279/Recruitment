@@ -104,6 +104,159 @@ class JobPosition(models.Model):
         default=lambda self: self.env.user,
     )
 
+    department_id = fields.Many2one(
+        "hr.department",
+        string="Phòng ban / Khối",
+        help="Phòng ban trực thuộc của vị trí tuyển dụng này",
+    )
+
+    state = fields.Selection(
+        [
+            ("draft", "Nháp"),
+            ("recruiting", "Đang tuyển dụng"),
+            ("closed", "Đã đóng tuyển dụng"),
+        ],
+        string="Trạng thái tuyển dụng",
+        default="recruiting",
+        required=True,
+    )
+
+    def action_set_recruiting(self):
+        for record in self:
+            record.write({"state": "recruiting", "active": True})
+
+    def action_set_closed(self):
+        for record in self:
+            record.write({"state": "closed"})
+
+    def action_set_draft(self):
+        for record in self:
+            record.write({"state": "draft"})
+
+    facebook_post_id = fields.Char(
+        string="Facebook Post ID",
+        readonly=True,
+        copy=False,
+    )
+    facebook_post_url = fields.Char(
+        string="Facebook Post Link",
+        readonly=True,
+        copy=False,
+    )
+    facebook_post_date = fields.Datetime(
+        string="Facebook Post Date",
+        readonly=True,
+        copy=False,
+    )
+
+    def action_post_to_facebook(self):
+        self.ensure_one()
+        import requests
+        import logging
+
+        _logger = logging.getLogger(__name__)
+
+        page_id = self.env['ir.config_parameter'].sudo().get_param('recruitment.facebook_page_id', default='')
+        access_token = self.env['ir.config_parameter'].sudo().get_param('recruitment.facebook_page_access_token', default='')
+
+        if not page_id or not access_token:
+            raise ValidationError(
+                "Chưa cấu hình Facebook Page ID hoặc Page Access Token!\n\n"
+                "Vui lòng vào Menu 'Tuyển dụng -> Cấu hình -> Cài đặt' (hoặc System Parameters) để nhập thông tin kết nối Facebook."
+            )
+
+        level_dict = dict(self._fields['job_level'].selection)
+        emp_dict = dict(self._fields['employment_type'].selection)
+        work_dict = dict(self._fields['workplace_type'].selection)
+
+        salary_str = "Thỏa thuận"
+        if self.salary_min > 0 and self.salary_max > 0:
+            salary_str = f"{self.salary_min:,.0f} - {self.salary_max:,.0f} VNĐ"
+        elif self.salary_min > 0:
+            salary_str = f"Từ {self.salary_min:,.0f} VNĐ"
+        elif self.salary_max > 0:
+            salary_str = f"Đến {self.salary_max:,.0f} VNĐ"
+
+        message_parts = [f"🔥 [GÓC TUYỂN DỤNG] - VỊ TRÍ: {self.name.upper()}\n"]
+        if self.department_id:
+            message_parts.append(f"🏢 Phòng ban / Khối: {self.department_id.name}")
+        message_parts.append(f"📍 Hình thức: {emp_dict.get(self.employment_type, '')} ({work_dict.get(self.workplace_type, '')})")
+        message_parts.append(f"💼 Cấp bậc: {level_dict.get(self.job_level, '')}")
+        message_parts.append(f"💰 Mức lương: {salary_str}")
+
+        if self.required_skills:
+            message_parts.append(f"📌 Kỹ năng yêu cầu: {self.required_skills}")
+        if self.min_experience_years > 0:
+            message_parts.append(f"⭐ Kinh nghiệm tối thiểu: {self.min_experience_years} năm")
+        if self.deadline:
+            message_parts.append(f"⏰ Hạn nộp hồ sơ: {fields.Date.to_string(self.deadline)}")
+
+        if self.description:
+            desc_clean = self.description.strip()
+            if len(desc_clean) > 400:
+                desc_clean = desc_clean[:400] + "..."
+            message_parts.append(f"\n📋 MÔ TẢ CÔNG VIỆC:\n{desc_clean}")
+
+        company_email = (self.env.company.email or "").strip()
+        if not company_email or any(dummy in company_email for dummy in ["yourcompany.com", "example.com"]):
+            company_email = "vodangkhoa270904@gmail.com"
+
+        message_parts.append(f"\n📩 Nộp CV ngay bằng cách gửi về email: {company_email}")
+        message_parts.append(f"#tuyendung #recruitment #{self.job_level} #odoo")
+
+        full_message = "\n".join(message_parts)
+
+        # Tự động xác định ID chuẩn của Trang từ Page Access Token qua GET /me
+        target_page_id = page_id.strip()
+        try:
+            me_res = requests.get(f"https://graph.facebook.com/v19.0/me?access_token={access_token.strip()}", timeout=10)
+            if me_res.status_code == 200:
+                me_json = me_res.json()
+                if me_json.get('id'):
+                    target_page_id = me_json['id']
+                    # Tự động cập nhật lại System Parameter cho chính xác
+                    self.env['ir.config_parameter'].sudo().set_param('recruitment.facebook_page_id', target_page_id)
+        except Exception as e:
+            _logger.warning("Không thể tự động lấy Page ID từ GET /me: %s", str(e))
+
+        url = f"https://graph.facebook.com/v19.0/{target_page_id}/feed"
+        payload = {
+            'message': full_message,
+            'access_token': access_token.strip(),
+        }
+
+        try:
+            response = requests.post(url, data=payload, timeout=15)
+            res_json = response.json()
+
+            if response.status_code in (200, 201) and 'id' in res_json:
+                post_id = res_json['id']
+                post_url = f"https://facebook.com/{post_id}"
+                self.write({
+                    'facebook_post_id': post_id,
+                    'facebook_post_url': post_url,
+                    'facebook_post_date': fields.Datetime.now(),
+                })
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Đăng bài Facebook Thành công! 🎉',
+                        'message': f'Tin tuyển dụng vị trí {self.name} đã được đăng lên Facebook Fanpage!',
+                        'type': 'success',
+                        'sticky': False,
+                    }
+                }
+            else:
+                err_msg = res_json.get('error', {}).get('message', response.text)
+                _logger.error("Lỗi khi đăng bài Facebook Graph API: %s", response.text)
+                raise ValidationError(f"Facebook Graph API trả về lỗi:\n\n{err_msg}")
+        except Exception as e:
+            if isinstance(e, ValidationError):
+                raise e
+            _logger.exception("Không thể kết nối đến Facebook Graph API")
+            raise ValidationError(f"Không thể kết nối đến Facebook Graph API: {str(e)}")
+
     _sql_constraints = [
         ("unique_name", "unique(name)", "Tên vị trí này đã tồn tại !"),
     ]

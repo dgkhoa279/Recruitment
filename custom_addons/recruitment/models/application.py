@@ -46,6 +46,18 @@ class RecruitmentApplication(models.Model):
         ondelete="restrict",
     )
 
+    department_id = fields.Many2one(
+        related="job_position_id.department_id",
+        string="Department",
+        store=True,
+        readonly=True,
+    )
+
+    expected_salary = fields.Float(
+        string="Expected Salary (VNĐ)",
+        default=0.0,
+    )
+
     interview_ids = fields.One2many(
         "recruitment.interview",
         "application_id",

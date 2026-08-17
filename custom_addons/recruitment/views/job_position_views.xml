@@ -9,6 +9,7 @@
         <field name="arch" type="xml">
             <tree string="Vị trí tuyển dụng">
                 <field name="name"/>
+                <field name="department_id"/>
                 <field name="job_level"/>
                 <field name="employment_type"/>
                 <field name="workplace_type"/>
@@ -16,7 +17,8 @@
                 <field name="hired_quantity"/>
                 <field name="hr_responsible_id" widget="many2one_avatar_user"/>
                 <field name="deadline"/>
-                <field name="active"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'recruiting'" decoration-danger="state == 'closed'"/>
+                <field name="active" optional="hide"/>
             </tree>
         </field>
     </record>
@@ -27,6 +29,13 @@
         <field name="model">recruitment.job.position</field>
         <field name="arch" type="xml">
             <form string="Vị trí tuyển dụng">
+                <header>
+                    <button name="action_post_to_facebook" string="Đăng tin lên Facebook" type="object" class="btn-primary" icon="fa-facebook-square" invisible="state == 'draft'"/>
+                    <button name="action_set_recruiting" string="Bắt đầu tuyển dụng" type="object" class="oe_highlight" invisible="state == 'recruiting'"/>
+                    <button name="action_set_closed" string="Đóng tuyển dụng" type="object" class="btn-warning" invisible="state == 'closed'"/>
+                    <button name="action_set_draft" string="Về bản nháp" type="object" class="btn-secondary" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,recruiting,closed"/>
+                </header>
                 <sheet>
                     <div class="oe_title">
                         <label for="name" string="Tên Vị trí Tuyển dụng"/>
@@ -37,6 +46,7 @@
 
                     <group>
                         <group string="Thông tin Tuyển dụng">
+                            <field name="department_id" options="{'no_create_edit': True}"/>
                             <field name="job_level"/>
                             <field name="employment_type"/>
                             <field name="workplace_type"/>
@@ -48,6 +58,16 @@
                             <field name="hired_quantity"/>
                             <field name="deadline"/>
                             <field name="active"/>
+                        </group>
+                    </group>
+
+                    <group string="Tích hợp Facebook Fanpage" invisible="not facebook_post_id">
+                        <group>
+                            <field name="facebook_post_id"/>
+                            <field name="facebook_post_date"/>
+                        </group>
+                        <group>
+                            <field name="facebook_post_url" widget="url" text="Xem bài đăng trên Facebook"/>
                         </group>
                     </group>
 
@@ -92,11 +112,17 @@
         <field name="arch" type="xml">
             <search>
                 <field name="name"/>
+                <field name="department_id"/>
                 <field name="required_skills"/>
                 <field name="hr_responsible_id"/>
+                <filter string="Đang tuyển dụng" name="state_recruiting" domain="[('state', '=', 'recruiting')]"/>
+                <filter string="Đã đóng" name="state_closed" domain="[('state', '=', 'closed')]"/>
+                <filter string="Bản nháp" name="state_draft" domain="[('state', '=', 'draft')]"/>
+                <separator/>
                 <filter string="Đang hoạt động" name="active" domain="[('active', '=', True)]"/>
-                <filter string="Đã đóng" name="inactive" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Group By">
+                    <filter string="Phòng ban" name="groupby_department" context="{'group_by': 'department_id'}"/>
+                    <filter string="Trạng thái" name="groupby_state" context="{'group_by': 'state'}"/>
                     <filter string="Cấp bậc (Level)" name="groupby_level" context="{'group_by': 'job_level'}"/>
                     <filter string="Loại hình (Type)" name="groupby_type" context="{'group_by': 'employment_type'}"/>
                     <filter string="Mô hình (Workplace)" name="groupby_workplace" context="{'group_by': 'workplace_type'}"/>

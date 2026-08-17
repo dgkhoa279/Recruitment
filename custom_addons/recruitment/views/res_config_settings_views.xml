@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Res Config Settings View -->
+    <record id="res_config_settings_view_form_recruitment" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.recruitment</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="100"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Tuyển dụng" string="Tuyển dụng" name="recruitment">
+                    <block title="Tích hợp Facebook Fanpage Công ty">
+                        <setting id="setting_facebook_integration" help="Cấu hình kết nối Facebook Graph API để tự động đăng tin tuyển dụng lên Facebook Fanpage">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="facebook_page_id" string="Facebook Page ID" class="col-lg-3 o_light_label"/>
+                                    <field name="facebook_page_id" placeholder="Ví dụ: 102938475610293"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="facebook_page_access_token" string="Page Access Token" class="col-lg-3 o_light_label"/>
+                                    <field name="facebook_page_access_token" password="True" placeholder="Dán Long-lived Page Access Token tại đây"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Settings Action -->
+    <record id="action_recruitment_config_settings" model="ir.actions.act_window">
+        <field name="name">Cài đặt Tuyển dụng</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module' : 'recruitment'}</field>
+    </record>
+
+    <!-- Menuitem -->
+    <menuitem id="menu_recruitment_settings"
+              name="Cài đặt (Settings)"
+              parent="menu_recruitment_configuration"
+              action="action_recruitment_config_settings"
+              sequence="100"/>
+
+</odoo>
