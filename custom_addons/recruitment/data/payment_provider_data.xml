@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Provider: VNPAY -->
+    <record id="payment_provider_vnpay" model="payment.provider">
+        <field name="name">VNPAY (QR / ATM / Quốc tế)</field>
+        <field name="code">vnpay</field>
+        <field name="state">enabled</field>
+        <field name="is_published">True</field>
+        <field name="vnpay_tmn_code">2QX5R1NG</field>
+    </record>
+
+    <!-- Provider: MoMo -->
+    <record id="payment_provider_momo" model="payment.provider">
+        <field name="name">Ví Điện Tử MoMo</field>
+        <field name="code">momo</field>
+        <field name="state">enabled</field>
+        <field name="is_published">True</field>
+        <field name="momo_partner_code">MOMO</field>
+    </record>
+
+    <!-- Provider: ZaloPay -->
+    <record id="payment_provider_zalopay" model="payment.provider">
+        <field name="name">Ví Điện Tử ZaloPay</field>
+        <field name="code">zalopay</field>
+        <field name="state">enabled</field>
+        <field name="is_published">True</field>
+        <field name="zalopay_app_id">2553</field>
+    </record>
+
+    <!-- Provider: VietQR -->
+    <record id="payment_provider_vietqr" model="payment.provider">
+        <field name="name">Chuyển Khoản Ngân Hàng (VietQR Auto)</field>
+        <field name="code">vietqr</field>
+        <field name="state">enabled</field>
+        <field name="is_published">True</field>
+    </record>
+
+</odoo>
