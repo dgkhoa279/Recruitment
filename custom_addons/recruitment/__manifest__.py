@@ -11,7 +11,7 @@ Recruitment management module for job positions and applicants.
     'category': 'Human Resources',
     'version': '0.1',
     'license': 'LGPL-3',
-    'depends': ['base', 'mail'],
+    'depends': ['base', 'mail', 'hr'],
     'data': [
         'security/ir.model.access.csv',
         'data/stage_data.xml',
@@ -29,6 +29,7 @@ Recruitment management module for job positions and applicants.
         'wizard/refuse_wizard_views.xml',
         'wizard/interview_wizard_views.xml',
         'wizard/offer_wizard_views.xml',
+        'views/res_config_settings_views.xml',
     ],
     'demo': [
         'demo/demo.xml',

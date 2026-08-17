@@ -11,6 +11,7 @@
                 <field name="name"/>
                 <field name="candidate_id"/>
                 <field name="job_position_id"/>
+                <field name="department_id" optional="show"/>
                 <field name="matching_score" widget="progressbar" string="Độ phù hợp (%)" optional="show"/>
                 <field name="application_date"/>
                 <field name="stage_id"/>
@@ -33,6 +34,7 @@
                 <field name="name"/>
                 <field name="candidate_id"/>
                 <field name="job_position_id"/>
+                <field name="department_id"/>
                 <field name="interviewer_user_id"/>
                 <field name="interview_date"/>
                 <field name="matching_score"/>
@@ -49,6 +51,9 @@
                                 </div>
                                 <div class="d-flex align-items-center flex-wrap gap-1">
                                     <span class="badge rounded-pill text-bg-info me-1"><field name="job_position_id"/></span>
+                                    <t t-if="record.department_id.raw_value">
+                                        <span class="badge rounded-pill text-bg-secondary me-1"><field name="department_id"/></span>
+                                    </t>
                                     <t t-if="record.matching_score.raw_value &gt; 0">
                                         <span t-attf-class="badge rounded-pill #{record.matching_score.raw_value &gt;= 70 ? 'text-bg-success' : (record.matching_score.raw_value &gt;= 40 ? 'text-bg-warning' : 'text-bg-danger')}">
                                             <i class="fa fa-check-circle me-1"/><t t-esc="record.matching_score.raw_value"/>% Matched
@@ -81,6 +86,7 @@
                 <field name="name"/>
                 <field name="candidate_id"/>
                 <field name="job_position_id"/>
+                <field name="department_id"/>
                 <field name="interviewer_user_id"/>
                 <field name="stage_id"/>
                 <field name="matched_skills"/>
@@ -92,6 +98,7 @@
                 <filter string="Đã từ chối (Archived)" name="inactive" domain="[('active', '=', False)]"/>
                 <separator/>
                 <group expand="0" string="Group By">
+                    <filter string="Phòng ban" name="groupby_department" context="{'group_by': 'department_id'}"/>
                     <filter string="Trạng thái (Stage)" name="groupby_stage" context="{'group_by': 'stage_id'}"/>
                     <filter string="Người phỏng vấn (Interviewer)" name="groupby_interviewer" context="{'group_by': 'interviewer_user_id'}"/>
                     <filter string="Vị trí tuyển dụng" name="groupby_job" context="{'group_by': 'job_position_id'}"/>
@@ -126,11 +133,13 @@
                                    force_save="1"/>
                             <field name="candidate_id"/>
                             <field name="job_position_id"/>
+                            <field name="department_id"/>
                             <field name="application_date"/>
                         </group>
 
                         <group>
                             <field name="source"/>
+                            <field name="expected_salary"/>
                             <field name="interviewer_user_id" options="{'no_create': True}"/>
                             <field name="interview_date"/>
                             <field name="refuse_reason_id" invisible="active"/>
