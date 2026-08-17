@@ -10,3 +10,4 @@ from . import offer
 from . import application_email_parser
 from . import refuse_reason
 from . import res_config_settings
+from . import payment_provider

@@ -58,6 +58,86 @@ class RecruitmentApplication(models.Model):
         default=0.0,
     )
 
+    is_vip_paid = fields.Boolean(
+        string="Đã thanh toán",
+        default=False,
+        copy=False,
+        tracking=True,
+    )
+
+    payment_amount = fields.Float(
+        string="Số tiền đã thanh toán (VNĐ)",
+        default=0.0,
+        copy=False,
+    )
+
+    payment_method = fields.Selection(
+        [
+            ("vietqr", "VietQR Ngân hàng"),
+            ("vnpay", "VNPAY QR"),
+            ("momo", "Ví MoMo"),
+            ("zalopay", "Ví ZaloPay"),
+        ],
+        string="Phương thức thanh toán",
+        readonly=True,
+        copy=False,
+    )
+
+    def action_open_payment_wizard(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Thanh toán Đơn ứng tuyển",
+            "res_model": "recruitment.payment.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_application_id": self.id,
+                "default_amount": 2000000.0,
+            },
+        }
+
+    def action_confirm_payment_and_hire(self, amount=2000000.0, method="vietqr"):
+        self.ensure_one()
+        hired_stage = self.env["recruitment.stage"].search(
+            [("name", "=ilike", "hired")], limit=1
+        )
+
+        method_labels = {
+            "vietqr": "VietQR Ngân hàng",
+            "vnpay": "VNPAY QR",
+            "momo": "Ví MoMo",
+            "zalopay": "Ví ZaloPay",
+        }
+        method_name = method_labels.get(method, method)
+
+        vals = {
+            "is_vip_paid": True,
+            "payment_amount": amount,
+            "payment_method": method,
+        }
+
+        if hired_stage:
+            vals["stage_id"] = hired_stage.id
+
+        self.write(vals)
+
+        msg = Markup(f"💳 <strong>Thanh toán thành công!</strong><br/>"
+                     f"Số tiền: {amount:,.0f} VNĐ qua {method_name}.<br/>"
+                     f"Hồ sơ đã được nâng cấp <strong>VIP</strong> và tự động chuyển sang stage <strong>HIRED</strong>! 🎉")
+        self.message_post(body=msg)
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": "Thanh toán Thành công! 🎉",
+                "message": f"Hồ sơ ứng viên {self.candidate_id.name} đã được thanh toán & chuyển sang HIRED!",
+                "type": "success",
+                "sticky": False,
+            },
+        }
+
     interview_ids = fields.One2many(
         "recruitment.interview",
         "application_id",

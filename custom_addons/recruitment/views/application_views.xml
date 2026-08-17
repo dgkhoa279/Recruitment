@@ -38,6 +38,7 @@
                 <field name="interviewer_user_id"/>
                 <field name="interview_date"/>
                 <field name="matching_score"/>
+                <field name="is_vip_paid"/>
                 <field name="active"/>
                 <templates>
                     <t t-name="kanban-box">
@@ -51,6 +52,9 @@
                                 </div>
                                 <div class="d-flex align-items-center flex-wrap gap-1">
                                     <span class="badge rounded-pill text-bg-info me-1"><field name="job_position_id"/></span>
+                                    <t t-if="record.is_vip_paid.raw_value">
+                                        <span class="badge rounded-pill text-bg-warning me-1"><i class="fa fa-bolt me-1"/>VIP Hired</span>
+                                    </t>
                                     <t t-if="record.department_id.raw_value">
                                         <span class="badge rounded-pill text-bg-secondary me-1"><field name="department_id"/></span>
                                     </t>
@@ -118,12 +122,15 @@
                     <button name="action_scan_cv" string="Quét CV" type="object" class="btn-info" invisible="not cv_file"/>
                     <button name="action_send_interview_email" string="Mời phỏng vấn" type="object" class="oe_highlight" invisible="not active"/>
                     <button name="action_send_offer_email" string="Mời nhận việc (Offer)" type="object" class="btn-success" invisible="not active"/>
+                    <button name="action_open_payment_wizard" string="Thanh toán" type="object" class="btn-warning" icon="fa-credit-card" invisible="not active or is_vip_paid"/>
                     <button name="action_open_refuse_wizard" string="Từ chối" type="object" class="btn-danger" invisible="not active"/>
                     <button name="action_restore_application" string="Khôi phục" type="object" class="btn-primary" invisible="active" icon="fa-undo"/>
                     <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
                 </header>
                 <sheet>
+                    <field name="is_vip_paid" invisible="1"/>
                     <widget name="web_ribbon" title="Refused" bg_color="text-bg-danger" invisible="active"/>
+                    <widget name="web_ribbon" title="VIP Hired" bg_color="text-bg-warning" invisible="not is_vip_paid"/>
 
                     <!-- Basic Information -->
                     <group>
