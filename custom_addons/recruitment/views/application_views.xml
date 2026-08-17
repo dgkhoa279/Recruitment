@@ -115,7 +115,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_scan_cv" string="Quét kỹ năng CV" type="object" class="btn-info" invisible="not cv_file"/>
+                    <button name="action_scan_cv" string="Quét CV" type="object" class="btn-info" invisible="not cv_file"/>
                     <button name="action_send_interview_email" string="Mời phỏng vấn" type="object" class="oe_highlight" invisible="not active"/>
                     <button name="action_send_offer_email" string="Mời nhận việc (Offer)" type="object" class="btn-success" invisible="not active"/>
                     <button name="action_open_refuse_wizard" string="Từ chối" type="object" class="btn-danger" invisible="not active"/>
@@ -148,7 +148,7 @@
                     </group>
 
                     <!-- CV Skill Matching Result Box -->
-                    <group string="Kết quả Quét Kỹ năng CV" invisible="not cv_file">
+                    <group string="Kết quả Quét CV" invisible="not cv_file">
                         <group>
                             <field name="matching_score" widget="progressbar"/>
                         </group>
