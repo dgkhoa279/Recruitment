@@ -63,6 +63,25 @@
                             </div>
                         </setting>
                     </block>
+
+                    <block title="Engine 2: AI Quét &amp; Phân tích CV Ngữ nghĩa Thông minh">
+                        <setting id="setting_ai_cv_integration" help="Cấu hình kết nối Google Gemini / OpenAI Vision để tự động đọc, sửa lỗi chính tả và chấm điểm CV">
+                            <div class="content-group">
+                                <div class="row mt16">
+                                    <label for="ai_cv_provider" string="Mô hình AI Engine" class="col-lg-3 o_light_label"/>
+                                    <field name="ai_cv_provider"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="ai_cv_api_key" string="AI API Key" class="col-lg-3 o_light_label"/>
+                                    <field name="ai_cv_api_key" password="True" placeholder="Dán Gemini API Key hoặc OpenAI Key tại đây"/>
+                                </div>
+                                <div class="row mt16">
+                                    <label for="ai_cv_model" string="Tên Model AI" class="col-lg-3 o_light_label"/>
+                                    <field name="ai_cv_model" placeholder="Ví dụ: gemini-1.5-flash hoặc gpt-4o-mini"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
                 </app>
             </xpath>
         </field>

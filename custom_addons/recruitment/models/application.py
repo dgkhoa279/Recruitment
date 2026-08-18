@@ -5,6 +5,7 @@ import base64
 import datetime
 import io
 import re
+import json
 import logging
 from .application_email_parser import ApplicationEmailParser
 
@@ -246,6 +247,18 @@ class RecruitmentApplication(models.Model):
         help="Các kỹ năng còn thiếu trong CV",
     )
 
+    ai_summary = fields.Text(
+        string="AI Executive Summary",
+        readonly=True,
+        help="Đoạn tóm tắt nhận xét ưu/nhược điểm chính của ứng viên do AI Engine 2 sinh ra",
+    )
+
+    cv_vector_json = fields.Text(
+        string="CV Vector Embeddings",
+        readonly=True,
+        help="Mảng Vector 768 chiều đại diện cho ngữ nghĩa của CV",
+    )
+
     def _extract_text_from_cv(self, cv_bytes):
         """Helper method to extract text from PDF or raw bytes."""
         if not cv_bytes:
@@ -286,6 +299,23 @@ class RecruitmentApplication(models.Model):
             except Exception:
                 return "File CV đính kèm không thuộc định dạng PDF văn bản hợp lệ."
 
+    def _generate_text_vector(self, text):
+        """Delegates vector generation to recruitment.ai.service."""
+        return self.env["recruitment.ai.service"].generate_vector_embedding(text)
+
+    def _scan_cv_with_ai(self, cv_bytes):
+        """Delegates AI Vision CV Scanning to recruitment.ai.service."""
+        self.ensure_one()
+        job_title = self.job_position_id.name or "Vị trí Tuyển dụng"
+        req_skills = self.job_position_id.required_skills or "Chưa chỉ định"
+        job_desc = self.job_position_id.description or "Không có mô tả công việc"
+        return self.env["recruitment.ai.service"].scan_cv_vision(
+            cv_bytes=cv_bytes,
+            job_title=job_title,
+            req_skills=req_skills,
+            job_desc=job_desc,
+        )
+
     def action_scan_cv(self):
         """
         Parses PDF CV file, extracts plain text, compares with
@@ -298,10 +328,52 @@ class RecruitmentApplication(models.Model):
                     "matching_score": 0.0,
                     "matched_skills": False,
                     "missing_skills": False,
+                    "ai_summary": False,
                 })
                 continue
 
             cv_bytes = base64.b64decode(app.cv_file)
+
+            # 1. Thử nghiệm gọi Engine 2 AI Vision trước
+            ai_result = app._scan_cv_with_ai(cv_bytes)
+            if ai_result:
+                score = float(ai_result.get('matching_score', 0.0))
+                matched_str = ai_result.get('matched_skills', 'Không có')
+                missing_str = ai_result.get('missing_skills', 'Không có')
+                extracted_text = ai_result.get('corrected_text') or app._extract_text_from_cv(cv_bytes)
+                summary = ai_result.get('ai_summary', '')
+
+                # Cập nhật thông tin ứng viên nếu tự động trích xuất được
+                if ai_result.get('candidate_name') and not app.candidate_id:
+                    cand = self.env['recruitment.candidate'].create({
+                        'name': ai_result['candidate_name'],
+                        'phone': ai_result.get('phone', ''),
+                        'email': ai_result.get('email', ''),
+                    })
+                    app.candidate_id = cand.id
+
+                vector_arr = app._generate_text_vector(f"{matched_str} {extracted_text}")
+
+                app.write({
+                    "cv_extracted_text": extracted_text,
+                    "matching_score": score,
+                    "matched_skills": matched_str,
+                    "missing_skills": missing_str,
+                    "ai_summary": summary,
+                    "cv_vector_json": json.dumps(vector_arr),
+                })
+
+                body = Markup(
+                    f"🤖 <b>Kết quả Quét CV bằng AI Engine 2 (Semantic Vision):</b><br/>"
+                    f"• Điểm phù hợp Ngữ nghĩa: <b>{score}%</b><br/>"
+                    f"• Kỹ năng đạt được: <span style='color: green;'>{matched_str}</span><br/>"
+                    f"• Kỹ năng còn thiếu: <span style='color: red;'>{missing_str}</span><br/><br/>"
+                    f"📝 <b>AI Tóm tắt Đánh giá:</b><br/>{summary}"
+                )
+                app.message_post(body=body)
+                continue
+
+            # 2. Fallback sang bộ quét Heuristic nếu chưa cấu hình AI Key
             extracted_text = app._extract_text_from_cv(cv_bytes)
 
             req_skills_str = app.job_position_id.required_skills or ""
@@ -342,6 +414,7 @@ class RecruitmentApplication(models.Model):
                 "matching_score": score,
                 "matched_skills": matched_str,
                 "missing_skills": missing_str,
+                "ai_summary": False,
             })
 
             # Post a log in Chatter
@@ -349,7 +422,8 @@ class RecruitmentApplication(models.Model):
                 f"<b>Kết quả quét CV PDF kỹ năng:</b><br/>"
                 f"• Điểm phù hợp: <b>{score}%</b><br/>"
                 f"• Kỹ năng đạt được: <span style='color: green;'>{matched_str}</span><br/>"
-                f"• Kỹ năng còn thiếu: <span style='color: red;'>{missing_str}</span>"
+                f"• Kỹ năng còn thiếu: <span style='color: red;'>{missing_str}</span><br/><br/>"
+                f"💡 <i>Mẹo: Cấu hình AI API Key trong Tuyển dụng ➔ Cài đặt để kích hoạt Engine 2 AI Quét CV Ngữ nghĩa Thông minh!</i>"
             )
             app.message_post(body=body)
 

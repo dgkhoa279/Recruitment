@@ -119,7 +119,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_scan_cv" string="Quét CV" type="object" class="btn-info" invisible="not cv_file"/>
+                    <button name="action_scan_cv" string="🪄 Quét CV bằng AI" type="object" class="btn-info fw-bold" invisible="not cv_file"/>
                     <button name="action_send_interview_email" string="Mời phỏng vấn" type="object" class="oe_highlight" invisible="not active"/>
                     <button name="action_send_offer_email" string="Mời nhận việc (Offer)" type="object" class="btn-success" invisible="not active"/>
                     <button name="action_open_payment_wizard" string="Thanh toán" type="object" class="btn-warning" icon="fa-credit-card" invisible="not active or is_vip_paid"/>
@@ -155,13 +155,16 @@
                     </group>
 
                     <!-- CV Skill Matching Result Box -->
-                    <group string="Kết quả Quét CV" invisible="not cv_file">
+                    <group string="Kết quả Quét CV Ngữ nghĩa (Engine 2 AI)" invisible="not cv_file">
                         <group>
                             <field name="matching_score" widget="progressbar"/>
                         </group>
                         <group>
                             <field name="matched_skills" class="text-success fw-bold"/>
                             <field name="missing_skills" class="text-danger fw-bold"/>
+                        </group>
+                        <group class="w-100" invisible="not ai_summary">
+                            <field name="ai_summary" style="font-style: italic; background-color: #f8f9fa; border-left: 4px solid #0d6efd; padding: 10px;"/>
                         </group>
                     </group>
 

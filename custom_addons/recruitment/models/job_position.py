@@ -297,3 +297,51 @@ class JobPosition(models.Model):
                 and record.salary_max < record.salary_min
             ):
                 raise ValidationError("Lương tối đa không được nhỏ hơn lương tối thiểu!")
+
+    def action_recommend_top_candidates(self):
+        """
+        Computes Vector Cosine Similarity between Job Requirements Vector and all Candidate CV Vectors in Database.
+        Returns Top 10 matching applications instantly!
+        """
+        self.ensure_one()
+        ai_service = self.env["recruitment.ai.service"]
+        job_text = f"{self.name} {self.required_skills or ''} {self.description or ''}"
+        job_vec = ai_service.generate_vector_embedding(job_text)
+
+        app_model = self.env["recruitment.application"]
+        applications = app_model.search([("active", "=", True), ("cv_file", "!=", False)])
+        if not applications:
+            raise ValidationError("Không tìm thấy Đơn ứng tuyển nào có file CV trong hệ thống để so sánh Vector!")
+
+        import json
+
+        results = []
+        for app in applications:
+            if app.cv_vector_json:
+                try:
+                    cv_vec = json.loads(app.cv_vector_json)
+                except Exception:
+                    cv_vec = []
+            else:
+                cv_vec = []
+
+            if not cv_vec:
+                cv_text = f"{app.matched_skills or ''} {app.cv_extracted_text or ''}"
+                cv_vec = ai_service.generate_vector_embedding(cv_text)
+                app.write({"cv_vector_json": json.dumps(cv_vec)})
+
+            match_pct = ai_service.compute_cosine_similarity(job_vec, cv_vec)
+            app.write({"matching_score": match_pct})
+            results.append((app.id, match_pct))
+
+        results.sort(key=lambda x: x[1], reverse=True)
+        top_app_ids = [r[0] for r in results[:10]]
+
+        return {
+            "name": f"Top Ứng viên Phù hợp nhất cho {self.name} (Vector Search)",
+            "type": "ir.actions.act_window",
+            "res_model": "recruitment.application",
+            "view_mode": "tree,kanban,form",
+            "domain": [("id", "in", top_app_ids)],
+            "context": {"order": "matching_score desc"},
+        }
