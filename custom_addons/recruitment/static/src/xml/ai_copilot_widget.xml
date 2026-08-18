@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="recruitment.AICopilotWidget">
+        <div class="o_ai_copilot_container">
+            <!-- Floating Button Trigger -->
+            <button class="btn btn-primary rounded-circle shadow-lg o_ai_copilot_trigger" t-on-click="togglePanel">
+                <i class="fa fa-android fa-2x"/>
+            </button>
+
+            <!-- Sliding Chat Panel -->
+            <div t-if="state.isOpen" class="o_ai_copilot_panel card shadow-lg">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div class="fw-bold d-flex align-items-center gap-2">
+                        <i class="fa fa-magic"/>
+                        <span>Trợ lý AI Copilot &amp; Tool Studio</span>
+                    </div>
+                    <button class="btn-close btn-close-white" t-on-click="togglePanel"/>
+                </div>
+
+                <div class="card-body o_ai_copilot_body overflow-auto">
+                    <t t-foreach="state.messages" t-as="msg" t-key="msg_index">
+                        <div t-attf-class="d-flex mb-3 #{msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}">
+                            <div t-attf-class="p-3 rounded-3 #{msg.sender === 'user' ? 'bg-primary text-white' : 'bg-light border text-dark'} o_ai_message_box">
+                                <div class="o_ai_message_text" style="white-space: pre-wrap;" t-esc="msg.text"/>
+                                <t t-if="msg.tool_id">
+                                    <div class="mt-2 pt-2 border-top">
+                                        <button class="btn btn-sm btn-success fw-bold w-100" t-on-click="() => this.executeTool(msg.tool_id, msg.tool_name)">
+                                            <i class="fa fa-play me-1"/>
+                                            <span>Chạy Tool: <t t-esc="msg.tool_name"/></span>
+                                        </button>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-if="state.isLoading">
+                        <div class="d-flex justify-content-start mb-3">
+                            <div class="p-3 bg-light border rounded-3 text-muted">
+                                <i class="fa fa-spinner fa-spin me-2"/>
+                                <span>AI đang suy nghĩ và xử lý...</span>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="card-footer bg-white border-top p-2">
+                    <div class="input-group">
+                        <textarea class="form-control" rows="1" placeholder="Nhập câu hỏi hoặc yêu cầu tạo Tool..." t-model="state.inputMessage" t-on-keydown="onKeyDown"/>
+                        <button class="btn btn-primary" t-on-click="sendMessage" t-att-disabled="state.isLoading">
+                            <i class="fa fa-paper-plane"/>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

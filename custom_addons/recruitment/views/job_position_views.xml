@@ -30,7 +30,7 @@
         <field name="arch" type="xml">
             <form string="Vị trí tuyển dụng">
                 <header>
-                    <button name="action_recommend_top_candidates" string="🔍 Gợi ý Top 5 Ứng viên (Vector Search)" type="object" class="btn-info fw-bold"/>
+                    <button name="action_recommend_top_candidates" string="🔍 Gợi ý Top 5 Ứng viên" type="object" class="btn-info fw-bold"/>
                     <button name="action_post_to_facebook" string="Đăng tin lên Facebook" type="object" class="btn-primary" icon="fa-facebook-square" invisible="state == 'draft'"/>
                     <button name="action_set_recruiting" string="Bắt đầu tuyển dụng" type="object" class="oe_highlight" invisible="state == 'recruiting'"/>
                     <button name="action_set_closed" string="Đóng tuyển dụng" type="object" class="btn-warning" invisible="state == 'closed'"/>
