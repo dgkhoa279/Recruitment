@@ -59,7 +59,28 @@ class RecruitmentPaymentController(http.Controller):
             return request.redirect(redirect_url)
         else:
             # THANH TOÁN THẤT BẠI HOẶC BỊ HỦY -> KHÔNG ĐỔI STAGE
-            error_msg = Markup(f"⚠️ <strong>Thanh toán VNPAY không thành công</strong> (Mã phản hồi VNPAY: {response_code}). Đơn ứng tuyển giữ nguyên trạng thái.")
-            application.message_post(body=error_msg)
+            msg = f"❌ Thanh toán VNPAY Thất bại! Mã lỗi: {response_code}"
+            application.message_post(body=Markup(f"<div class='alert alert-danger'>{msg}</div>"))
             redirect_url = f"/web#id={application.id}&model=recruitment.application&view_type=form"
             return request.redirect(redirect_url)
+
+
+class AICopilotController(http.Controller):
+
+    @http.route('/recruitment/ai_copilot/chat', type='json', auth='user', csrf=True)
+    def ai_copilot_chat(self, message, history=None, **kw):
+        if not message:
+            return {"error": "Tin nhắn rỗng"}
+        res = request.env['recruitment.ai.service'].sudo().process_chat_message(message, history=history)
+        return res
+
+    @http.route('/recruitment/ai_copilot/execute_tool', type='json', auth='user', csrf=True)
+    def ai_copilot_execute_tool(self, tool_id, **kw):
+        tool = request.env['recruitment.ai.tool'].sudo().browse(int(tool_id))
+        if not tool.exists():
+            return {"error": "Công cụ không tồn tại"}
+        try:
+            res = tool.action_execute_tool()
+            return {"status": "success", "result": res}
+        except Exception as e:
+            return {"error": str(e)}

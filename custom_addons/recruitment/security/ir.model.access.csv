@@ -10,3 +10,4 @@ access_refuse_wizard_user,recruitment.refuse.wizard.user,model_recruitment_refus
 access_interview_wizard_user,recruitment.interview.wizard.user,model_recruitment_interview_wizard,base.group_user,1,1,1,1
 access_offer_wizard_user,recruitment.offer.wizard.user,model_recruitment_offer_wizard,base.group_user,1,1,1,1
 access_payment_wizard_user,recruitment.payment.wizard.user,model_recruitment_payment_wizard,base.group_user,1,1,1,1
+access_ai_tool_user,recruitment.ai.tool.user,model_recruitment_ai_tool,base.group_user,1,1,1,1

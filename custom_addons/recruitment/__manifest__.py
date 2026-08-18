@@ -33,7 +33,15 @@ Recruitment management module for job positions and applicants.
         'wizard/payment_wizard_views.xml',
         'views/payment_provider_views.xml',
         'views/res_config_settings_views.xml',
+        'views/ai_tool_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'recruitment/static/src/scss/ai_copilot_widget.scss',
+            'recruitment/static/src/js/ai_copilot_widget.js',
+            'recruitment/static/src/xml/ai_copilot_widget.xml',
+        ],
+    },
     'demo': [
         'demo/demo.xml',
     ],
