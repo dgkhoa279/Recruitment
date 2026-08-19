@@ -43,6 +43,11 @@ class RecruitmentAITool(models.Model):
         string="Lần thực thi cuối",
     )
 
+    last_execution_result = fields.Text(
+        string="Kết quả thực thi gần nhất",
+        readonly=True,
+    )
+
     def action_execute_tool(self):
         """
         Executes the sandboxed Python code of this AI Tool cleanly in Odoo.
@@ -69,28 +74,20 @@ class RecruitmentAITool(models.Model):
 
         try:
             exec(self.python_code, safe_globals, safe_locals)
+
+            res_msg = safe_locals.get("result_message") or "Đã thực thi Công cụ AI thành công!"
+            action_res = safe_locals.get("action_result")
+
             self.write({
                 "execution_count": self.execution_count + 1,
                 "last_execution_date": fields.Datetime.now(),
+                "last_execution_result": res_msg,
             })
-
-            # Check if code defined a result string or action
-            res_msg = safe_locals.get("result_message") or "Đã thực thi Công cụ AI thành công!"
-            action_res = safe_locals.get("action_result")
 
             if action_res and isinstance(action_res, dict):
                 return action_res
 
-            return {
-                "type": "ir.actions.client",
-                "tag": "display_notification",
-                "params": {
-                    "title": f"Thành công: {self.name} 🎉",
-                    "message": res_msg,
-                    "type": "success",
-                    "sticky": False,
-                },
-            }
+            return True
         except Exception as e:
             _logger.exception("Lỗi khi thực thi AI Tool '%s'", self.name)
             raise ValidationError(f"Lỗi khi thực thi Công cụ '{self.name}': {str(e)}")
