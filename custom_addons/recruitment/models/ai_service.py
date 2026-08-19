@@ -216,38 +216,69 @@ Trả về nội dung văn bản thuần đẹp mắt, trình bày rõ ràng."""
         except Exception as e:
             return False, str(e)
 
+    def _get_dynamic_recruitment_schema(self):
+        """
+        Dynamic Odoo ORM Schema Introspection:
+        Automatically scans all models starting with 'recruitment.' registered in Odoo env at runtime.
+        Extracts model technical names, descriptions, field names, field types, and relational comodels dynamically.
+        Zero hardcoding required!
+        """
+        schema_lines = []
+        recruitment_models = [m for m in self.env if m.startswith("recruitment.")]
+
+        for model_name in sorted(recruitment_models):
+            try:
+                model_obj = self.env[model_name]
+                desc = model_obj._description or model_name
+                schema_lines.append(f"📌 MODEL `env['{model_name}']` ({desc}):")
+
+                field_items = []
+                for f_name, f_obj in model_obj._fields.items():
+                    if f_name in ('create_date', 'create_uid', 'write_date', 'write_uid', '__last_update'):
+                        continue
+                    f_type = f_obj.type
+                    rel = f" -> {f_obj.comodel_name}" if hasattr(f_obj, 'comodel_name') and f_obj.comodel_name else ""
+                    field_items.append(f"   - `{f_name}` ({f_type}{rel}): {f_obj.string}")
+
+                schema_lines.append("\n".join(field_items))
+                schema_lines.append("")
+            except Exception as e:
+                continue
+
+        return "\n".join(schema_lines)
+
     def process_chat_message(self, user_message, history=None):
         """
-        AI Copilot Router with Multi-turn Conversation Memory:
-        Classifies user intent (CHAT vs GENERATE_TOOL) while maintaining full context history!
+        AI Copilot Router with Multi-turn Conversation Memory & Dynamic Schema Auto-Discovery:
+        Classifies user intent (CHAT vs GENERATE_TOOL) while maintaining full context history & live database schema!
         """
         provider, api_key, model_name = self._get_ai_config()
 
-        system_prompt = """Bạn là Trợ lý Tuyển dụng AI Copilot thông minh (Engine 1 & 2).
+        dynamic_schema = self._get_dynamic_recruitment_schema()
+
+        system_prompt = f"""Bạn là Trợ lý Tuyển dụng AI Copilot chuyên nghiệp và chính xác 100%.
 Nhiệm vụ của bạn là tiếp nhận tin nhắn chat từ nhân sự HR và phân loại mục đích (Intent):
 
 THƯỜNG GỢI Ý 2 TRƯỜNG HỢP:
 1. Nếu người dùng hỏi đáp/tư vấn HR bình thường: Trả về JSON với "intent": "CHAT" và "ai_reply": "câu trả lời...".
-2. Nếu người dùng YÊU CẦU TẠO TOOL / TỰ ĐỘNG HÓA NGHIỆP VỤ trong Odoo (Ví dụ: 'tạo tool viết mô tả cho job position...', 'lọc ứng viên...', 'viết tool đổi stage...'):
+2. Nếu người dùng YÊU CẦU TẠO/SỬA TOOL TỰ ĐỘNG HÓA NGHIỆP VỤ trong Odoo:
    Trả về JSON với:
    - "intent": "GENERATE_TOOL"
    - "tool_name": "Tên công cụ ngắn gọn"
-   - "python_code": "Đoạn code Python chuẩn Odoo ORM.
-     QUY TẮC ĐẶC BIỆT KHI VIẾT MÔ TẢ JOB/JD HOẶC SINH NỘI DUNG VĂN BẢN:
-     - Nếu yêu cầu tạo/viết mô tả công việc (JD) cho vị trí tuyển dụng, KHÔNG ĐƯỢC GÁN CHUỖI TĨNH GIẢ LẬP HÀM HỒ!
-     - PHẢI GỌI HÀM AI SERVICE: `env['recruitment.ai.service'].generate_job_description(job.name, job.required_skills, job.job_level)` để AI sinh JD chi tiết thực sự cho từng Vị trí!
-     - Gán `result_message = 'thông báo...'` ở cuối code. KHÔNG dùng import, KHÔNG dùng sudo, KHÔNG dùng unlink."
-   - "ai_reply": "Lời giải thích 1-2 dòng về công cụ đã tạo."
+   - "python_code": "Mã Python chuẩn Odoo ORM"
+   - "ai_reply": "Lời giải thích ngắn 1 dòng"
 
-VÍ DỤ CODE PYTHON MẪU CHUẨN CHO TOOL VIẾT MÔ TẢ JOB POSITION:
-ai_service = env['recruitment.ai.service']
-jobs = env['recruitment.job.position'].search([])
-count = 0
-for job in jobs:
-    jd_text = ai_service.generate_job_description(job.name, job.required_skills, job.job_level)
-    job.write({'description': jd_text})
-    count += 1
-result_message = f"Đã tự động tạo bài viết Mô tả công việc (JD) chuyên nghiệp cho {count} vị trí tuyển dụng!"
+⚠️ SƠ ĐỒ DATABASE CHÍNH XÁC HIỆN TẠI (ĐƯỢC QUÉT ĐỘNG TRỰC TIẾP TỪ ODOO ORM AT RUNTIME):
+🚫 CẤM TUYỆT ĐỐI SỬ DỤNG CÁC MODEL CHUẨN MẶC ĐỊNH CỦA ODOO (Như `hr.applicant`, `hr.job`, `hr.department`, `hr.employee`...)!
+✅ BẮT BUỘC CHỈ SỬ DỤNG CÁC MODEL TÙY CHỈNH DƯỚI ĐÂY:
+
+{dynamic_schema}
+
+QUY TẮC VIẾT PYTHON CODE TRONG TOOL:
+- Để đếm số lượng bản ghi, PHẢI DÙNG `search_count(domain)` thay vì `len(search(domain))` để tối ưu RAM.
+- Nếu người dùng yêu cầu viết/sinh Mô tả công việc (JD), gọi hàm AI: `env['recruitment.ai.service'].generate_job_description(job.name, job.required_skills, job.job_level)`.
+- Luôn gán `result_message = 'thông báo kết quả...'` ở dòng cuối cùng của python_code.
+- CẤM dùng `import`, `sudo()`, `unlink()`, `exec`, `eval`.
 
 TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON DUY NHẤT (KHÔNG markdown ```json ... ```):
 """
@@ -316,15 +347,40 @@ TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON DUY NHẤT (KHÔNG markdown ```json ... ``
                         is_safe, err_msg = self.validate_python_ast(code)
 
                         if is_safe:
-                            tool_rec = self.env["recruitment.ai.tool"].create({
-                                "name": tool_name,
-                                "prompt": user_message,
-                                "python_code": code,
-                                "is_valid": True,
-                            })
+                            is_update_request = any(kw in user_message.lower() for kw in ["sửa", "update", "fix", "chỉnh sửa", "thay đổi", "viết lại", "cập nhật", "lại"])
+
+                            existing_tool = None
+                            if is_update_request or tool_name:
+                                existing_tool = self.env["recruitment.ai.tool"].search([
+                                    "|",
+                                    ("name", "ilike", tool_name),
+                                    ("name", "=", tool_name)
+                                ], order="id desc", limit=1)
+
+                                if not existing_tool and is_update_request:
+                                    existing_tool = self.env["recruitment.ai.tool"].search([], order="id desc", limit=1)
+
+                            if existing_tool and (is_update_request or existing_tool.name.strip().lower() == tool_name.strip().lower()):
+                                existing_tool.write({
+                                    "name": tool_name,
+                                    "prompt": user_message,
+                                    "python_code": code,
+                                    "is_valid": True,
+                                })
+                                tool_rec = existing_tool
+                                action_label = "🔄 Đã cập nhật lại mã nguồn công cụ"
+                            else:
+                                tool_rec = self.env["recruitment.ai.tool"].create({
+                                    "name": tool_name,
+                                    "prompt": user_message,
+                                    "python_code": code,
+                                    "is_valid": True,
+                                })
+                                action_label = "✨ Đã khởi tạo công cụ mới"
+
                             return {
                                 "intent": "GENERATE_TOOL",
-                                "ai_reply": f"✨ {res_dict.get('ai_reply', 'Đã khởi tạo công cụ thành công!')}\n\n🛠️ Công cụ: {tool_name}\n🛡️ ",
+                                "ai_reply": f"{action_label}: **{tool_rec.name}**!\n\n🛠️ **Mã Tool:** #{tool_rec.id}\n🛡️ **Bảo mật AST:** Hợp lệ ✅",
                                 "tool_id": tool_rec.id,
                                 "tool_name": tool_rec.name,
                             }
