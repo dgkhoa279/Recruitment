@@ -1,27 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Inherit payment.provider form view to add credential fields -->
+    <!-- Inherit payment.provider form view if extra recruitment fields are needed -->
     <record id="payment_provider_form_inherit_recruitment" model="ir.ui.view">
         <field name="name">payment.provider.form.inherit.recruitment</field>
         <field name="model">payment.provider</field>
         <field name="inherit_id" ref="payment.payment_provider_form"/>
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
-                <group string="Cấu hình Thông số API Thanh toán" invisible="code not in ['vnpay', 'momo', 'zalopay']">
-                    <group string="Cấu hình VNPAY" invisible="code != 'vnpay'">
-                        <field name="vnpay_tmn_code"/>
-                        <field name="vnpay_hash_secret" password="True"/>
-                    </group>
-                    <group string="Cấu hình MoMo" invisible="code != 'momo'">
-                        <field name="momo_partner_code"/>
-                        <field name="momo_secret_key" password="True"/>
-                    </group>
-                    <group string="Cấu hình ZaloPay" invisible="code != 'zalopay'">
-                        <field name="zalopay_app_id"/>
-                        <field name="zalopay_key1" password="True"/>
-                    </group>
-                </group>
+                <!-- Reserved for recruitment payment providers -->
             </xpath>
         </field>
     </record>

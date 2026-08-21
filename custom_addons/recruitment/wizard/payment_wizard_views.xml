@@ -16,6 +16,7 @@
                         <group string="Thông tin Đơn ứng tuyển">
                             <field name="application_id" readonly="1"/>
                             <field name="candidate_name"/>
+                            <field name="candidate_email"/>
                             <field name="job_position_name"/>
                         </group>
 
@@ -27,7 +28,7 @@
                 </sheet>
 
                 <footer>
-                    <button name="action_confirm_payment" string="Xác nhận Thanh toán &amp; Duyệt Hired ⚡" type="object" class="btn-warning fw-bold"/>
+                    <button name="action_confirm_payment" string="⚡ Tạo &amp; Gửi Email Link VNPAY cho Ứng viên" type="object" class="btn-primary fw-bold"/>
                     <button string="Hủy bỏ" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

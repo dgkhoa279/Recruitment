@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Template Form Redirect cho Cổng Thanh Toán VNPAY -->
+    <template id="redirect_form">
+        <form id="o_vnpay_redirect_form" t-att-action="api_url" method="get">
+            <script type="text/javascript">
+                window.location.href = "<t t-out="api_url"/>";
+            </script>
+        </form>
+    </template>
+
+</odoo>
