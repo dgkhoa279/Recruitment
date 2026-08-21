@@ -107,8 +107,6 @@ class RecruitmentApplication(models.Model):
         method_labels = {
             "vietqr": "VietQR Ngân hàng",
             "vnpay": "VNPAY QR",
-            "momo": "Ví MoMo",
-            "zalopay": "Ví ZaloPay",
         }
         method_name = method_labels.get(method, method)
 
@@ -123,9 +121,60 @@ class RecruitmentApplication(models.Model):
 
         self.write(vals)
 
+        # -------------------------------------------------------------
+        # TỰ ĐỘNG KHỞI TẠO & XÁC NHẬN HÓA ĐƠN TRONG MODULE INVOICING (ACCOUNT)
+        # -------------------------------------------------------------
+        invoice_msg_part = ""
+        try:
+            if "account.move" in self.env:
+                partner = getattr(self.candidate_id, "partner_id", None)
+                if not partner:
+                    partner = self.env["res.partner"].create({
+                        "name": self.candidate_id.name or f"Ứng viên APP#{self.id}",
+                        "email": self.candidate_id.email,
+                        "phone": self.candidate_id.phone,
+                    })
+                    if hasattr(self.candidate_id, "partner_id"):
+                        self.candidate_id.partner_id = partner.id
+
+                job_name = self.job_position_id.name if self.job_position_id else "Vị trí tuyển dụng"
+                invoice_vals = {
+                    "move_type": "out_invoice",
+                    "partner_id": partner.id,
+                    "invoice_date": fields.Date.context_today(self),
+                    "ref": f"Thanh toan VIP APP#{self.id} - {method_name}",
+                    "invoice_line_ids": [(0, 0, {
+                        "name": f"Phí xử lý & Đơn ứng tuyển VIP - Vị trí {job_name}",
+                        "quantity": 1,
+                        "price_unit": amount,
+                    })],
+                }
+                invoice = self.env["account.move"].create(invoice_vals)
+                invoice.action_post()
+
+                # Tự động ghi nhận thanh toán (Register Payment)
+                journal = self.env["account.journal"].search([("type", "in", ["bank", "cash"])], limit=1)
+                if journal and "account.payment.register" in self.env:
+                    payment_wizard = self.env["account.payment.register"].with_context(
+                        active_model="account.move",
+                        active_ids=invoice.ids,
+                    ).create({
+                        "amount": amount,
+                        "payment_date": fields.Date.context_today(self),
+                        "journal_id": journal.id,
+                    })
+                    payment_wizard.action_create_payments()
+
+                inv_url = f"/web#id={invoice.id}&model=account.move&view_type=form"
+                invoice_msg_part = f"<br/>🧾 <strong>Hóa đơn Kế toán đã khởi tạo:</strong> <a href='{inv_url}'><strong>{invoice.name}</strong></a> (Trạng thái: <strong>Paid</strong>) 🎉"
+        except Exception as e:
+            _logger.exception("Lỗi khi tự động khởi tạo Hóa đơn Invoicing: %s", str(e))
+            invoice_msg_part = f"<br/>⚠️ <em>Lỗi khởi tạo Hóa đơn: {str(e)}</em>"
+
         msg = Markup(f"💳 <strong>Thanh toán thành công!</strong><br/>"
                      f"Số tiền: {amount:,.0f} VNĐ qua {method_name}.<br/>"
-                     f"Hồ sơ đã được nâng cấp <strong>VIP</strong> và tự động chuyển sang stage <strong>HIRED</strong>! 🎉")
+                     f"Hồ sơ đã được nâng cấp <strong>VIP</strong> và tự động chuyển sang stage <strong>HIRED</strong>! 🎉"
+                     f"{invoice_msg_part}")
         self.message_post(body=msg)
 
         return {

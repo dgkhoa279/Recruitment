@@ -16,41 +16,6 @@ class ResConfigSettings(models.TransientModel):
         help="Long-lived Page Access Token được cấp từ Facebook Developer App",
     )
 
-    # VNPAY
-    vnpay_tmn_code = fields.Char(
-        string="VNPAY TMN Code",
-        config_parameter="recruitment.vnpay_tmn_code",
-        help="Mã Website (TMN Code) cấp bởi VNPAY",
-    )
-    vnpay_hash_secret = fields.Char(
-        string="VNPAY Hash Secret",
-        config_parameter="recruitment.vnpay_hash_secret",
-        help="Chuỗi Hash Secret bảo mật cấp bởi VNPAY",
-    )
-
-    # MoMo
-    momo_partner_code = fields.Char(
-        string="MoMo Partner Code",
-        config_parameter="recruitment.momo_partner_code",
-        help="Mã đối tác (Partner Code) cấp bởi MoMo",
-    )
-    momo_secret_key = fields.Char(
-        string="MoMo Secret Key",
-        config_parameter="recruitment.momo_secret_key",
-        help="Khóa bí mật Secret Key cấp bởi MoMo",
-    )
-
-    # ZaloPay
-    zalopay_app_id = fields.Char(
-        string="ZaloPay App ID",
-        config_parameter="recruitment.zalopay_app_id",
-        help="Mã App ID cấp bởi ZaloPay",
-    )
-    zalopay_key1 = fields.Char(
-        string="ZaloPay Key 1",
-        config_parameter="recruitment.zalopay_key1",
-        help="Khóa Key1 cấp bởi ZaloPay",
-    )
 
     # Engine 2: AI CV Scanner Settings
     ai_cv_provider = fields.Selection(

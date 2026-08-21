@@ -25,44 +25,6 @@
                         </setting>
                     </block>
 
-                    <block title="Cấu hình Cổng Thanh toán (VNPAY / MoMo / ZaloPay)">
-                        <setting id="setting_vnpay_integration" help="Cấu hình thông số Merchant API VNPAY">
-                            <div class="content-group">
-                                <div class="row mt16">
-                                    <label for="vnpay_tmn_code" string="VNPAY TMN Code" class="col-lg-3 o_light_label"/>
-                                    <field name="vnpay_tmn_code" placeholder="Mã TMN Code cấp bởi VNPAY"/>
-                                </div>
-                                <div class="row mt16">
-                                    <label for="vnpay_hash_secret" string="VNPAY Hash Secret" class="col-lg-3 o_light_label"/>
-                                    <field name="vnpay_hash_secret" password="True" placeholder="Chuỗi Hash Secret cấp bởi VNPAY"/>
-                                </div>
-                            </div>
-                        </setting>
-                        <setting id="setting_momo_integration" help="Cấu hình thông số Partner API MoMo">
-                            <div class="content-group">
-                                <div class="row mt16">
-                                    <label for="momo_partner_code" string="MoMo Partner Code" class="col-lg-3 o_light_label"/>
-                                    <field name="momo_partner_code" placeholder="Mã Partner Code cấp bởi MoMo"/>
-                                </div>
-                                <div class="row mt16">
-                                    <label for="momo_secret_key" string="MoMo Secret Key" class="col-lg-3 o_light_label"/>
-                                    <field name="momo_secret_key" password="True" placeholder="Chuỗi Secret Key cấp bởi MoMo"/>
-                                </div>
-                            </div>
-                        </setting>
-                        <setting id="setting_zalopay_integration" help="Cấu hình thông số App API ZaloPay">
-                            <div class="content-group">
-                                <div class="row mt16">
-                                    <label for="zalopay_app_id" string="ZaloPay App ID" class="col-lg-3 o_light_label"/>
-                                    <field name="zalopay_app_id" placeholder="Mã App ID cấp bởi ZaloPay"/>
-                                </div>
-                                <div class="row mt16">
-                                    <label for="zalopay_key1" string="ZaloPay Key 1" class="col-lg-3 o_light_label"/>
-                                    <field name="zalopay_key1" password="True" placeholder="Khóa Key1 cấp bởi ZaloPay"/>
-                                </div>
-                            </div>
-                        </setting>
-                    </block>
 
                     <block title="Engine 2: AI Quét &amp; Phân tích CV Ngữ nghĩa Thông minh">
                         <setting id="setting_ai_cv_integration" help="Cấu hình kết nối Google Gemini / OpenAI Vision để tự động đọc, sửa lỗi chính tả và chấm điểm CV">
