@@ -16,6 +16,7 @@
         name="Dashboard"
         parent="menu_recruitment_root"
         action="action_recruitment_dashboard_app"
+        groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"
         sequence="5"
     />
 
