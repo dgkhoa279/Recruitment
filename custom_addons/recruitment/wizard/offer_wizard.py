@@ -174,8 +174,8 @@ class RecruitmentOfferWizard(models.TransientModel):
             'res_id': app.id,
             'model': 'recruitment.application',
         }
-        mail = self.env['mail.mail'].create(mail_values)
-        mail.send()
+        mail = self.env['mail.mail'].sudo().create(mail_values)
+        mail.sudo().send()
 
         # 5. Create Mail Activity for HR to follow up
         activity_type = self.env.ref("mail.mail_activity_data_todo", raise_if_not_found=False)

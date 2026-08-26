@@ -37,7 +37,7 @@ class RecruitmentRefuseWizard(models.TransientModel):
                 'active': False,
             })
             if self.send_email and self.template_id:
-                self.template_id.send_mail(
+                self.template_id.sudo().send_mail(
                     application.id,
                     force_send=True,
                 )

@@ -279,14 +279,35 @@ class RecruitmentInterviewWizard(models.TransientModel):
                                     'view_mode': 'form',
                                     'target': 'new',
                                 }
-                else:
                     _logger.warning("Google Calendar API trả về lỗi code %s: %s", response.status_code, response.text)
-            except Exception as e:
-                _logger.warning("Lỗi khi gọi Google Calendar API: %s", str(e))
+                    err_json = {}
+                    try:
+                        err_json = response.json()
+                    except Exception:
+                        pass
+                    err_msg = err_json.get('error', {}).get('message', response.text)
 
-        # 3. Nếu chưa lấy được token hoặc API bị từ chối, báo ValidationError với hướng dẫn chi tiết
+                    if response.status_code == 403 or 'INSUFFICIENT' in response.text:
+                        raise ValidationError(
+                            f"Google Calendar API từ chối truy cập (Lỗi 403: Insufficient Permission)!\n\n"
+                            f"Chi tiết từ Google: {err_msg}\n\n"
+                            "Nguyên nhân: Google Refresh Token của Gmail Server/Fetchmail trong Odoo hiện tại CHỈ ĐƯỢC CẤP QUYỀN GMAIL (https://mail.google.com/), CHƯA ĐƯỢC CẤP QUYỀN GOOGLE CALENDAR.\n\n"
+                            "Cách khắc phục triệt để trên Google Cloud & Odoo:\n"
+                            "1. Vào Google Cloud Console -> APIs & Services -> OAuth consent screen -> Thêm Scope 'https://www.googleapis.com/auth/calendar.events'.\n"
+                            "2. Vào APIs & Services -> Library -> Tìm 'Google Calendar API' và bấm ENABLE.\n"
+                            "3. Trong Odoo -> Vào Cài đặt Email / Fetchmail -> Bấm 'Gmail OAuth2 Authentication' để đăng nhập lại và chấp nhận quyền Calendar."
+                        )
+                    else:
+                        raise ValidationError(f"Google Calendar API trả về lỗi (Code {response.status_code}):\n{err_msg}")
+            except Exception as e:
+                if isinstance(e, ValidationError):
+                    raise e
+                _logger.exception("Lỗi khi gọi Google Calendar API")
+                raise ValidationError(f"Không thể gọi Google Calendar API: {str(e)}")
+
         raise ValidationError(
-            "Không thể tự động gọi Google Calendar API để tạo phòng họp Google Meet"
+            "Không tìm thấy Google OAuth Access Token trong hệ thống Odoo để gọi Google Calendar API.\n\n"
+            "Vui lòng đảm bảo bạn đã cấu hình Gmail / Google OAuth2 trong Odoo."
         )
 
     @api.model_create_multi
@@ -360,8 +381,8 @@ class RecruitmentInterviewWizard(models.TransientModel):
             'res_id': app.id,
             'model': 'recruitment.application',
         }
-        mail = self.env['mail.mail'].create(mail_values)
-        mail.send()
+        mail = self.env['mail.mail'].sudo().create(mail_values)
+        mail.sudo().send()
 
         # 5. Create Mail Activity notification for Interviewer
         activity_type = self.env.ref("mail.mail_activity_data_meeting", raise_if_not_found=False)
