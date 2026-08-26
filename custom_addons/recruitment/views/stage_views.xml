@@ -60,6 +60,7 @@
         id="menu_recruitment_configuration"
         name="Configuration"
         parent="menu_recruitment_root"
+        groups="recruitment.group_recruitment_manager"
         sequence="90"
     />
 

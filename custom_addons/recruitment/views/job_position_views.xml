@@ -30,11 +30,11 @@
         <field name="arch" type="xml">
             <form string="Vị trí tuyển dụng">
                 <header>
-                    <button name="action_recommend_top_candidates" string="🔍 Gợi ý Top 5 Ứng viên" type="object" class="btn-info fw-bold"/>
-                    <button name="action_post_to_facebook" string="Đăng tin lên Facebook" type="object" class="btn-primary" icon="fa-facebook-square" invisible="state == 'draft'"/>
-                    <button name="action_set_recruiting" string="Bắt đầu tuyển dụng" type="object" class="oe_highlight" invisible="state == 'recruiting'"/>
-                    <button name="action_set_closed" string="Đóng tuyển dụng" type="object" class="btn-warning" invisible="state == 'closed'"/>
-                    <button name="action_set_draft" string="Về bản nháp" type="object" class="btn-secondary" invisible="state == 'draft'"/>
+                    <button name="action_recommend_top_candidates" string="🔍 Gợi ý Top 5 Ứng viên" type="object" class="btn-info fw-bold" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_post_to_facebook" string="Đăng tin lên Facebook" type="object" class="btn-primary" icon="fa-facebook-square" invisible="state == 'draft'" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_set_recruiting" string="Bắt đầu tuyển dụng" type="object" class="oe_highlight" invisible="state == 'recruiting'" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_set_closed" string="Đóng tuyển dụng" type="object" class="btn-warning" invisible="state == 'closed'" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_set_draft" string="Về bản nháp" type="object" class="btn-secondary" invisible="state == 'draft'" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,recruiting,closed"/>
                 </header>
                 <sheet>
@@ -62,7 +62,7 @@
                         </group>
                     </group>
 
-                    <group string="Tích hợp Facebook Fanpage" invisible="not facebook_post_id">
+                    <group string="Tích hợp Facebook Fanpage" invisible="not facebook_post_id" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager">
                         <group>
                             <field name="facebook_post_id"/>
                             <field name="facebook_post_date"/>
@@ -78,8 +78,8 @@
                             <field name="min_experience_years"/>
                         </group>
                         <group>
-                            <field name="salary_min"/>
-                            <field name="salary_max"/>
+                            <field name="salary_min" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                            <field name="salary_max" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                         </group>
                     </group>
 
