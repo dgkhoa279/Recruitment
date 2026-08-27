@@ -26,3 +26,5 @@ access_offer_wizard_officer,recruitment.offer.wizard.officer,model_recruitment_o
 access_payment_wizard_officer,recruitment.payment.wizard.officer,model_recruitment_payment_wizard,group_recruitment_user,1,1,1,0
 access_ai_tool_officer,recruitment.ai.tool.officer,model_recruitment_ai_tool,group_recruitment_user,1,0,0,0
 access_ai_tool_manager,recruitment.ai.tool.manager,model_recruitment_ai_tool,group_recruitment_manager,1,1,1,1
+access_payment_provider_officer,payment.provider.officer,payment.model_payment_provider,group_recruitment_user,1,0,0,0
+access_payment_provider_manager,payment.provider.manager,payment.model_payment_provider,group_recruitment_manager,1,0,0,0
