@@ -30,7 +30,6 @@ Recruitment management module for job positions and applicants.
         'wizard/refuse_wizard_views.xml',
         'wizard/interview_wizard_views.xml',
         'wizard/offer_wizard_views.xml',
-        'data/payment_provider_data.xml',
         'wizard/payment_wizard_views.xml',
         'views/payment_provider_views.xml',
         'views/res_config_settings_views.xml',
