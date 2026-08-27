@@ -119,10 +119,10 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_scan_cv" string="🪄 Quét CV bằng AI" type="object" class="btn-info fw-bold" invisible="not cv_file" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_scan_cv" string="Quét CV" type="object" class="btn-info fw-bold" invisible="not cv_file" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                     <button name="action_send_interview_email" string="Mời phỏng vấn" type="object" class="oe_highlight" invisible="not active" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
-                    <button name="action_send_offer_email" string="Mời nhận việc (Offer)" type="object" class="btn-success" invisible="not active" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
-                    <button name="action_open_payment_wizard" string="Thanh toán" type="object" class="btn-warning" icon="fa-credit-card" invisible="not active or is_vip_paid" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_send_offer_email" string="Mời nhận việc" type="object" class="btn-success" invisible="not active" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_open_payment_wizard" string="Thanh toán" type="object" class="btn-warning" icon="fa-credit-card" invisible="not active or is_vip_paid" groups="recruitment.group_recruitment_manager"/>
                     <button name="action_open_refuse_wizard" string="Từ chối" type="object" class="btn-danger" invisible="not active"/>
                     <button name="action_restore_application" string="Khôi phục" type="object" class="btn-primary" invisible="active" icon="fa-undo" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                     <field name="stage_id" widget="statusbar" options="{'clickable': '1'}"/>
@@ -155,7 +155,7 @@
                     </group>
 
                     <!-- CV Skill Matching Result Box -->
-                    <group string="Kết quả Quét CV Ngữ nghĩa (Engine 2 AI)" invisible="not cv_file">
+                    <group string="Kết quả Quét CV" invisible="not cv_file">
                         <group>
                             <field name="matching_score" widget="progressbar"/>
                         </group>
@@ -175,11 +175,6 @@
                                 <field name="cv_file" filename="cv_filename"/>
                                 <field name="cv_filename" invisible="1"/>
                             </group>
-                        </page>
-
-                        <!-- Extracted CV Text -->
-                        <page string="Văn bản bóc tách CV (Extracted Text)" invisible="not cv_file">
-                            <field name="cv_extracted_text" placeholder="Nội dung văn bản bóc tách từ file CV PDF..."/>
                         </page>
 
                         <!-- Notes -->

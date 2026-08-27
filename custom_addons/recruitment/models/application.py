@@ -271,12 +271,6 @@ class RecruitmentApplication(models.Model):
         string="Refuse Reason",
     )
 
-    cv_extracted_text = fields.Text(
-        string="Extracted CV Text",
-        readonly=True,
-        help="Nội dung văn bản bóc tách từ file CV PDF",
-    )
-
     matching_score = fields.Float(
         string="Skill Matching Score (%)",
         readonly=True,
@@ -403,18 +397,9 @@ class RecruitmentApplication(models.Model):
 
                 vector_arr = app._generate_text_vector(f"{matched_str} {extracted_text}")
 
-                app.write({
-                    "cv_extracted_text": extracted_text,
-                    "matching_score": score,
-                    "matched_skills": matched_str,
-                    "missing_skills": missing_str,
-                    "ai_summary": summary,
-                    "cv_vector_json": json.dumps(vector_arr),
-                })
-
                 body = Markup(
-                    f"🤖 <b>Kết quả Quét CV bằng AI Engine 2 (Semantic Vision):</b><br/>"
-                    f"• Điểm phù hợp Ngữ nghĩa: <b>{score}%</b><br/>"
+                    f"<b>Kết quả:</b><br/>"
+                    f"• Độ phù hợp: <b>{score}%</b><br/>"
                     f"• Kỹ năng đạt được: <span style='color: green;'>{matched_str}</span><br/>"
                     f"• Kỹ năng còn thiếu: <span style='color: red;'>{missing_str}</span><br/><br/>"
                     f"📝 <b>AI Tóm tắt Đánh giá:</b><br/>{summary}"
