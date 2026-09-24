@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<odoo noupdate="1">
+    <record id="provider_ollama" model="muk_ai.provider">
+        <field name="name">ollama</field>
+        <field name="sequence">1</field>
+        <field name="max_tokens">4096</field>
+        <field name="request_timeout">120</field>
+        <field name="idle_timeout">60</field>
+        <field name="rate_limit">10</field>
+        <field name="ollama_url">http://127.0.0.1:11434</field>
+        <field name="ollama_fallback_provider_id" eval="False"/>
+    </record>
+</odoo>

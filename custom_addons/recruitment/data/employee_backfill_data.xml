@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Create employees for Hired applications made before this integration. -->
+    <function
+        model="recruitment.application"
+        name="_backfill_hired_employees"
+    />
+</odoo>

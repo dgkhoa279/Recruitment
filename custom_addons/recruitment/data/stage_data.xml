@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo noupdate="1">
+
+    <record id="stage_new" model="recruitment.stage">
+        <field name="name">New</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="stage_screening" model="recruitment.stage">
+        <field name="name">Screening</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="stage_first_interview" model="recruitment.stage">
+        <field name="name">First Interview</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <record id="stage_second_interview" model="recruitment.stage">
+        <field name="name">Second Interview</field>
+        <field name="sequence">35</field>
+    </record>
+
+    <record id="stage_offer" model="recruitment.stage">
+        <field name="name">Offer</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="stage_hired" model="recruitment.stage">
+        <field name="name">Hired</field>
+        <field name="sequence">50</field>
+    </record>
+
+</odoo>

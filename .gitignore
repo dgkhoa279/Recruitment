@@ -7,9 +7,18 @@ __pycache__/
 # Odoo source
 odoo/
 
+# Local runtimes and model weights (installed separately; see README)
+third_party/
+
+# MuK vendor repository (installed separately; see README)
+custom_addons/muk_modules/
+
 # Odoo logs
 logs/
 *.log
+
+# Local model weights are managed outside the Odoo addon by Ollama
+custom_addons/recruitment/models/llm_models/
 
 # Odoo configuration
 config/odoo.conf

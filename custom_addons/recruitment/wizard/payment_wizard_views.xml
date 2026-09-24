@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Payment Wizard Form View -->
+    <record id="view_payment_wizard_form" model="ir.ui.view">
+        <field name="name">recruitment.payment.wizard.form</field>
+        <field name="model">recruitment.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Thanh toán Đơn ứng tuyển">
+                <sheet>
+                    <div class="text-center mb-3">
+                        <h3 class="text-primary fw-bold">Thông Tin Thanh Toán</h3>
+                    </div>
+
+                    <group>
+                        <group string="Thông tin Đơn ứng tuyển">
+                            <field name="application_id" readonly="1"/>
+                            <field name="candidate_name"/>
+                            <field name="candidate_email"/>
+                            <field name="job_position_name"/>
+                        </group>
+
+                        <group string="Cấu hình Thanh toán">
+                            <field name="amount"/>
+                            <field name="provider_id" options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                    </group>
+                </sheet>
+
+                <footer>
+                    <button name="action_confirm_payment" string="Gửi link" type="object" class="btn-primary fw-bold"/>
+                    <button string="Hủy bỏ" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Payment Wizard Action -->
+    <record id="action_payment_wizard" model="ir.actions.act_window">
+        <field name="name">Thanh toán Đơn ứng tuyển</field>
+        <field name="res_model">recruitment.payment.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

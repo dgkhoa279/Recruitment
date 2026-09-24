@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Payment Method: VNPAY -->
+    <record id="payment_method_vnpay" model="payment.method">
+        <field name="name">VNPAY (QR / ATM / Visa / Mastercard)</field>
+        <field name="code">vnpay</field>
+        <field name="sequence">10</field>
+        <field name="active">True</field>
+    </record>
+
+    <!-- Standalone Payment Provider Record for VNPAY -->
+    <record id="payment_provider_vnpay" model="payment.provider">
+        <field name="name">VNPAY (Cổng Thanh Toán Quốc Tế / ATM / QR)</field>
+        <field name="code">vnpay</field>
+        <field name="state">enabled</field>
+        <field name="is_published">True</field>
+        <field name="redirect_form_view_id" ref="payment_vnpay.redirect_form"/>
+        <field name="payment_method_ids" eval="[(4, ref('payment_vnpay.payment_method_vnpay'))]"/>
+    </record>
+
+</odoo>

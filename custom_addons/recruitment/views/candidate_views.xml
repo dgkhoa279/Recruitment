@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- Candidate List View -->
+    <record id="view_candidate_list" model="ir.ui.view">
+        <field name="name">recruitment.candidate.list</field>
+        <field name="model">recruitment.candidate</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="job_position_id"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="application_date"/>
+                <field name="expected_salary"/>
+                <field name="experience_years"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+
+    <!-- Candidate Form View -->
+    <record id="view_candidate_form" model="ir.ui.view">
+        <field name="name">recruitment.candidate.form</field>
+        <field name="model">recruitment.candidate</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                            <field name="date_of_birth"/>
+                            <field name="gender"/>
+                        </group>
+
+                        <group>
+                            <field name="job_position_id"/>
+                            <field name="application_date"/>
+                            <field name="expected_salary"/>
+                            <field name="experience_years"/>
+                            <field name="education"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+
+                        <page string="Skills">
+                            <field name="skills"/>
+                        </page>
+
+                        <page string="CV">
+                            <group>
+                                <field name="cv_file" filename="cv_filename"/>
+                                <field name="cv_filename" invisible="1"/>
+                            </group>
+                        </page>
+
+                        <page string="Applications">
+                            <field name="application_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="job_position_id"/>
+                                    <field name="application_date"/>
+                                    <field name="stage_id"/>
+                                    <field name="cv_file" filename="cv_filename"/>
+                                    <field name="cv_filename" column_invisible="1"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Address">
+                            <field name="address"/>
+                        </page>
+
+                        <page string="Notes">
+                            <field name="note"/>
+                        </page>
+
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <!-- Candidate Action -->
+    <record id="action_candidate" model="ir.actions.act_window">
+        <field name="name">Candidates</field>
+        <field name="res_model">recruitment.candidate</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+
+    <!-- Candidate Menu -->
+    <menuitem
+        id="menu_candidate"
+        name="Candidates"
+        parent="menu_recruitment_root"
+        action="action_candidate"
+        sequence="20"
+    />
+
+</odoo>
