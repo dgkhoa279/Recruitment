@@ -48,11 +48,18 @@ class JobPosition(models.Model):
             ("ready", "Ready"),
             ("failed", "Failed"),
         ],
-        default="pending",
+        default="failed",
         readonly=True,
         copy=False,
     )
-    rag_index_error = fields.Text(readonly=True, copy=False)
+    rag_index_error = fields.Text(
+        default=(
+            "MuK AI chưa cung cấp API embedding dùng chung; "
+            "RAG vector tạm ngưng."
+        ),
+        readonly=True,
+        copy=False,
+    )
     rag_indexed_at = fields.Datetime(readonly=True, copy=False)
     rag_source_checksum = fields.Char(readonly=True, copy=False, index=True)
 
@@ -141,8 +148,11 @@ class JobPosition(models.Model):
         rag_fields = {"name", "description", "required_skills", "job_level"}
         if not self.env.context.get("skip_ai_reindex") and rag_fields.intersection(vals):
             self.with_context(skip_ai_reindex=True).write({
-                "rag_index_status": "pending",
-                "rag_index_error": False,
+                "rag_index_status": "failed",
+                "rag_index_error": (
+                    "MuK AI chưa cung cấp API embedding dùng chung; "
+                    "RAG vector tạm ngưng."
+                ),
             })
         return result
 
@@ -427,7 +437,8 @@ class JobPosition(models.Model):
                 )
         if not best_by_application:
             raise ValidationError(
-                "Chưa có CV chunks tương thích. Hãy kiểm tra RAG status và embedding settings."
+                "Tính năng xếp hạng RAG đang tạm ngưng vì MuK AI chưa cung cấp "
+                "API embedding dùng chung."
             )
         results = sorted(best_by_application.items(), key=lambda item: item[1], reverse=True)
         top_app_ids = [application_id for application_id, _score in results[:10]]

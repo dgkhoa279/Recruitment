@@ -26,37 +26,16 @@
                     </block>
 
 
-                    <block title="Local AI với Ollama và Gemini fallback">
-                        <setting id="setting_ai_cv_integration" help="Ollama xử lý chính; Gemini chỉ chạy khi local lỗi và fallback được bật">
+                    <block title="Tích hợp MuK AI">
+                        <setting id="setting_ai_cv_integration" help="Recruitment sử dụng provider và model của Agent được chọn trong MuK AI">
                             <div class="content-group">
                                 <div class="row mt16">
-                                    <label for="ollama_endpoint" string="Ollama Endpoint" class="col-lg-3 o_light_label"/>
-                                    <field name="ollama_endpoint" placeholder="http://localhost:11434"/>
+                                    <label for="recruitment_ai_agent_id" string="MuK AI Agent" class="col-lg-3 o_light_label"/>
+                                    <field name="recruitment_ai_agent_id" options="{'no_create': True}"/>
                                 </div>
-                                <div class="row mt16">
-                                    <label for="ollama_chat_model" string="Ollama Generation Model" class="col-lg-3 o_light_label"/>
-                                    <field name="ollama_chat_model" placeholder="Ví dụ: qwen3, llama3.2"/>
-                                </div>
-                                <div class="row mt16">
-                                    <label for="ai_embedding_model" string="Ollama Embedding Model" class="col-lg-3 o_light_label"/>
-                                    <field name="ai_embedding_model" placeholder="embeddinggemma"/>
-                                </div>
-                                <div class="row mt16">
-                                    <label for="ai_embedding_dimensions" string="Vector Dimensions" class="col-lg-3 o_light_label"/>
-                                    <field name="ai_embedding_dimensions"/>
-                                </div>
-                                <div class="row mt16">
-                                    <label for="gemini_fallback_enabled" string="Gemini Fallback" class="col-lg-3 o_light_label"/>
-                                    <field name="gemini_fallback_enabled"/>
-                                    <span class="text-muted ms-2">Có thể gửi nội dung CV/JD lên Google khi Ollama lỗi.</span>
-                                </div>
-                                <div class="row mt16" invisible="not gemini_fallback_enabled">
-                                    <label for="gemini_api_key" string="Gemini API Key" class="col-lg-3 o_light_label"/>
-                                    <field name="gemini_api_key" password="True"/>
-                                </div>
-                                <div class="row mt16" invisible="not gemini_fallback_enabled">
-                                    <label for="gemini_model" string="Gemini Model" class="col-lg-3 o_light_label"/>
-                                    <field name="gemini_model" placeholder="gemini-1.5-flash"/>
+                                <div class="text-muted mt8">
+                                    API key, provider và model được quản lý tập trung trong MuK AI.
+                                    Recruitment không còn lưu cấu hình Gemini/Ollama riêng.
                                 </div>
                             </div>
                         </setting>

@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from markupsafe import Markup, escape
 import base64
 import datetime
@@ -361,13 +361,19 @@ class RecruitmentApplication(models.Model):
 
             cv_bytes = base64.b64decode(app.cv_file)
 
-            # Prefer structured analysis through the configured provider adapter.
-            ai_result = ai_service.analyze_cv(
-                cv_bytes=cv_bytes,
-                job_title=app.job_position_id.name or "Vị trí Tuyển dụng",
-                req_skills=app.job_position_id.required_skills or "Chưa chỉ định",
-                job_desc=app.job_position_id.description or "Không có mô tả công việc",
-            )
+            # Prefer structured analysis through the MuK AI agent selected in settings.
+            ai_error = False
+            try:
+                ai_result = ai_service.analyze_cv(
+                    cv_bytes=cv_bytes,
+                    job_title=app.job_position_id.name or "Vị trí Tuyển dụng",
+                    req_skills=app.job_position_id.required_skills or "Chưa chỉ định",
+                    job_desc=app.job_position_id.description or "Không có mô tả công việc",
+                )
+            except UserError as exc:
+                ai_result = None
+                ai_error = str(exc)
+                _logger.warning("MuK AI CV scan thất bại cho application %s: %s", app.id, exc)
             if ai_result:
                 score = float(ai_result.get('matching_score', 0.0))
                 matched_str = ai_result.get('matched_skills', 'Không có')
@@ -392,16 +398,25 @@ class RecruitmentApplication(models.Model):
                     "matched_skills": matched_str,
                     "missing_skills": missing_str,
                     "ai_summary": summary,
-                    "rag_index_status": "pending",
-                    "rag_index_error": False,
+                    "rag_index_status": "failed",
+                    "rag_index_error": (
+                        "MuK AI chưa cung cấp API embedding dùng chung; "
+                        "RAG vector tạm ngưng."
+                    ),
                 })
 
+                muk_runtime = " / ".join(filter(None, [
+                    ai_result.get('_muk_ai_agent'),
+                    ai_result.get('_muk_ai_provider'),
+                    ai_result.get('_muk_ai_model'),
+                ]))
                 body = Markup(
                     f"<b>Kết quả Quét CV:</b><br/>"
                     f"• Độ phù hợp: <b>{score}%</b><br/>"
                     f"• Kỹ năng đạt được: <span style='color: green;'>{escape(matched_str)}</span><br/>"
                     f"• Kỹ năng còn thiếu: <span style='color: red;'>{escape(missing_str)}</span><br/><br/>"
-                    f"📝 <b>AI Tóm tắt Đánh giá:</b><br/>{escape(summary)}"
+                    f"📝 <b>AI Tóm tắt Đánh giá:</b><br/>{escape(summary)}<br/><br/>"
+                    f"🤖 <i>MuK AI: {escape(muk_runtime)}</i>"
                 )
                 app.message_post(body=body)
                 continue
@@ -449,8 +464,11 @@ class RecruitmentApplication(models.Model):
                 "matched_skills": matched_str,
                 "missing_skills": missing_str,
                 "ai_summary": False,
-                "rag_index_status": "pending",
-                "rag_index_error": False,
+                "rag_index_status": "failed",
+                "rag_index_error": (
+                    "MuK AI chưa cung cấp API embedding dùng chung; "
+                    "RAG vector tạm ngưng."
+                ),
             })
 
             # Post a log in Chatter
@@ -459,7 +477,8 @@ class RecruitmentApplication(models.Model):
                 f"• Điểm phù hợp: <b>{score}%</b><br/>"
                 f"• Kỹ năng đạt được: <span style='color: green;'>{escape(matched_str)}</span><br/>"
                 f"• Kỹ năng còn thiếu: <span style='color: red;'>{escape(missing_str)}</span><br/><br/>"
-                f"💡 <i>AI provider chưa sẵn sàng; kết quả trên chỉ dùng đối sánh từ khóa cục bộ.</i>"
+                f"💡 <i>MuK AI chưa sẵn sàng; kết quả trên chỉ dùng đối sánh từ khóa cục bộ."
+                f"{('<br/>Lỗi: ' + escape(ai_error)) if ai_error else ''}</i>"
             )
             app.message_post(body=body)
 

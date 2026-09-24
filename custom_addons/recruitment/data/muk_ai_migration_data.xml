@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <function model="res.config.settings" name="_migrate_recruitment_ai_to_muk"/>
+</odoo>
