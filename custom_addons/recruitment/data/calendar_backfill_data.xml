@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Idempotent upgrade step for interviews created before calendar linking. -->
+    <function
+        model="recruitment.interview"
+        name="_backfill_future_calendar_events"
+    />
+</odoo>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_generated_tool_search" model="ir.ui.view">
+        <field name="name">muk_ai.generated.tool.search</field>
+        <field name="model">muk_ai.generated.tool</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="model_name"/>
+                <field name="owner_id"/>
+                <filter name="active" string="Active" domain="[('state', '=', 'active')]"/>
+                <filter name="needs_revision" string="Needs Revision" domain="[('state', '=', 'failed')]"/>
+                <group>
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_owner" string="Owner" context="{'group_by': 'owner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_generated_tool_tree" model="ir.ui.view">
+        <field name="name">muk_ai.generated.tool.tree</field>
+        <field name="model">muk_ai.generated.tool</field>
+        <field name="arch" type="xml">
+            <tree create="0">
+                <field name="name"/>
+                <field name="model_name"/>
+                <field name="operation"/>
+                <field name="state" widget="badge"/>
+                <field name="revision_count"/>
+                <field name="owner_id" groups="base.group_system"/>
+                <field name="last_tested_at"/>
+                <button
+                    name="action_run"
+                    type="object"
+                    string="Run"
+                    icon="fa-play"
+                    invisible="state != 'active'"
+                />
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_generated_tool_form" model="ir.ui.view">
+        <field name="name">muk_ai.generated.tool.form</field>
+        <field name="model">muk_ai.generated.tool</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <header>
+                    <button
+                        name="action_run"
+                        type="object"
+                        string="Run"
+                        class="oe_highlight"
+                        invisible="state != 'active'"
+                    />
+                    <field name="state" invisible="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="owner_id"/>
+                            <field name="skill_id"/>
+                            <field name="agent_id"/>
+                        </group>
+                        <group>
+                            <field name="model_name"/>
+                            <field name="operation"/>
+                            <field name="revision_count"/>
+                            <field name="active_revision_number"/>
+                            <field name="max_revisions"/>
+                            <field name="remaining_revisions"/>
+                            <field name="max_records"/>
+                            <field name="max_ai_calls"/>
+                            <field name="max_runtime_seconds"/>
+                        </group>
+                    </group>
+                    <group string="Description"><field name="description" nolabel="1"/></group>
+                    <notebook>
+                        <page string="Requested Task">
+                            <field name="original_request"/>
+                            <field name="task_contract" widget="json"/>
+                        </page>
+                        <page string="Source Code">
+                            <field name="source_code" nolabel="1" widget="ace" options="{'mode': 'python'}"/>
+                        </page>
+                        <page string="Capabilities">
+                            <field name="capability_manifest" nolabel="1" widget="json"/>
+                        </page>
+                        <page string="Inputs">
+                            <group>
+                                <field name="input_schema" widget="json"/>
+                                <field name="default_arguments" widget="json"/>
+                            </group>
+                        </page>
+                        <page string="Validation and Feedback">
+                            <field name="last_test_result" widget="json"/>
+                            <field name="last_error_kind"/>
+                            <field name="last_error"/>
+                            <field name="last_tested_at"/>
+                        </page>
+                        <page string="Revisions">
+                            <field name="revision_ids">
+                                <tree create="0" edit="0" delete="0">
+                                    <field name="revision"/>
+                                    <field name="status" widget="badge"/>
+                                    <field name="authored_by"/>
+                                    <field name="source_turn_seq"/>
+                                    <field name="create_date"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Runs">
+                            <field name="run_ids">
+                                <tree create="0" edit="0" delete="0">
+                                    <field name="create_date"/>
+                                    <field name="user_id"/>
+                                    <field name="revision"/>
+                                    <field name="status" widget="badge"/>
+                                    <field name="duration_ms"/>
+                                    <field name="error_message" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_generated_tool" model="ir.actions.act_window">
+        <field name="name">Generated Tools</field>
+        <field name="res_model">muk_ai.generated.tool</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <menuitem
+        id="menu_generated_tool"
+        name="Generated Tools"
+        parent="muk_ai.menu_ai_root"
+        action="action_generated_tool"
+        sequence="36"
+        groups="base.group_user"
+    />
+</odoo>

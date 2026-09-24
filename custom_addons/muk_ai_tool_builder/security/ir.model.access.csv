@@ -1,0 +1,9 @@
+id,name,model_id/id,group_id/id,perm_read,perm_write,perm_create,perm_unlink
+access_generated_tool_user,muk_ai.generated.tool.user,model_muk_ai_generated_tool,base.group_user,1,0,0,0
+access_generated_tool_admin,muk_ai.generated.tool.admin,model_muk_ai_generated_tool,base.group_system,1,1,1,1
+access_generated_tool_revision_user,muk_ai.generated.tool.revision.user,model_muk_ai_generated_tool_revision,base.group_user,1,0,0,0
+access_generated_tool_revision_admin,muk_ai.generated.tool.revision.admin,model_muk_ai_generated_tool_revision,base.group_system,1,1,1,1
+access_generated_tool_run_user,muk_ai.generated.tool.run.user,model_muk_ai_generated_tool_run,base.group_user,1,0,0,0
+access_generated_tool_run_admin,muk_ai.generated.tool.run.admin,model_muk_ai_generated_tool_run,base.group_system,1,1,1,1
+access_generated_tool_execution_user,muk_ai.generated.tool.execution.user,model_muk_ai_generated_tool_execution,base.group_user,1,1,0,0
+access_generated_tool_argument_user,muk_ai.generated.tool.argument.user,model_muk_ai_generated_tool_argument,base.group_user,1,1,0,0

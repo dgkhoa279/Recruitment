@@ -12,4 +12,4 @@ from . import refuse_reason
 from . import res_config_settings
 from . import payment_provider
 from . import ai_service
-from . import ai_tool
+from . import cv_chunk

@@ -31,11 +31,12 @@
             <form string="Vị trí tuyển dụng">
                 <header>
                     <button name="action_recommend_top_candidates" string="🔍 Gợi ý Top 5 Ứng viên" type="object" class="btn-info fw-bold" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
-                    <button name="action_post_to_facebook" string="Đăng tin lên Facebook" type="object" class="btn-primary" icon="fa-facebook-square" invisible="state == 'draft'" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_post_to_facebook" string="Đăng tin lên Facebook" type="object" class="btn-primary" icon="fa-facebook-square" invisible="facebook_post_id and not facebook_repost_allowed" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                     <button name="action_set_recruiting" string="Bắt đầu tuyển dụng" type="object" class="oe_highlight" invisible="state == 'recruiting'" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                     <button name="action_set_closed" string="Đóng tuyển dụng" type="object" class="btn-warning" invisible="state == 'closed'" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                     <button name="action_set_draft" string="Về bản nháp" type="object" class="btn-secondary" invisible="state == 'draft'" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,recruiting,closed"/>
+                    <field name="facebook_repost_allowed" invisible="1"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -68,7 +69,7 @@
                             <field name="facebook_post_date"/>
                         </group>
                         <group>
-                            <field name="facebook_post_url" widget="url" text="Xem bài đăng trên Facebook"/>
+                            <button name="action_open_facebook_post" string="Xem bài đăng trên Facebook" type="object" class="btn-link" icon="fa-external-link"/>
                         </group>
                     </group>
 
@@ -76,6 +77,9 @@
                         <group>
                             <field name="required_skills" placeholder="VD: Python, Odoo, HTML, CSS, SQL"/>
                             <field name="min_experience_years"/>
+                            <field name="rag_index_status" widget="badge"/>
+                            <field name="rag_indexed_at" invisible="rag_index_status != 'ready'"/>
+                            <field name="rag_index_error" invisible="rag_index_status != 'failed'"/>
                         </group>
                         <group>
                             <field name="salary_min" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>

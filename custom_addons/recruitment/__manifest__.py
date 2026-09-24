@@ -9,14 +9,20 @@ Recruitment management module for job positions and applicants.
     'author': "My Company",
     'website': "https://www.yourcompany.com",
     'category': 'Human Resources',
-    'version': '0.1',
+    'version': '17.0.0.2.0',
     'license': 'LGPL-3',
-    'depends': ['base', 'mail', 'hr', 'payment', 'account', 'payment_vnpay'],
+    'depends': ['base', 'mail', 'hr', 'payment', 'account', 'payment_vnpay', 'google_calendar'],
+    'external_dependencies': {
+        'python': ['requests', 'pypdf'],
+    },
     'data': [
         'security/recruitment_security.xml',
         'security/ir.model.access.csv',
         'data/stage_data.xml',
         'data/mail_template_data.xml',
+        'data/ai_cron_data.xml',
+        'data/calendar_backfill_data.xml',
+        'data/employee_backfill_data.xml',
         'views/views.xml',
         'views/templates.xml',
         'views/job_position_views.xml',
@@ -33,15 +39,7 @@ Recruitment management module for job positions and applicants.
         'wizard/payment_wizard_views.xml',
         'views/payment_provider_views.xml',
         'views/res_config_settings_views.xml',
-        'views/ai_tool_views.xml',
     ],
-    'assets': {
-        'web.assets_backend': [
-            'recruitment/static/src/scss/ai_copilot_widget.scss',
-            'recruitment/static/src/js/ai_copilot_widget.js',
-            'recruitment/static/src/xml/ai_copilot_widget.xml',
-        ],
-    },
     'demo': [
         'demo/demo.xml',
     ],

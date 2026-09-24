@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!--
+        Version 17.0.1 stored this skill as noupdate data. Make that existing
+        external identifier updateable before loading the ACL-driven policy.
+        On a fresh database the search is empty and this is a no-op.
+    -->
+    <function model="ir.model.data" name="write">
+        <function model="ir.model.data" name="search">
+            <value eval="[('module', '=', 'muk_ai_tool_builder'), ('name', '=', 'skill_recruitment_interview_tool_builder')]"/>
+        </function>
+        <value eval="{'noupdate': False}"/>
+    </function>
+</odoo>

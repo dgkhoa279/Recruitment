@@ -1,6 +1,5 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-import datetime
 
 
 class RecruitmentInterviewWizard(models.TransientModel):
@@ -153,7 +152,6 @@ class RecruitmentInterviewWizard(models.TransientModel):
                 """
 
     @api.onchange('application_id', 'interviewer', 'interviewer_user_id', 'scheduled_date', 'interview_type', 'interview_round', 'location', 'template_id')
-    @api.onchange('application_id', 'interviewer', 'interviewer_user_id', 'scheduled_date', 'interview_type', 'location', 'template_id')
     def _onchange_interview_fields(self):
         if not self.application_id:
             return
@@ -170,8 +168,6 @@ class RecruitmentInterviewWizard(models.TransientModel):
         round_label = "Vòng 1 (Sơ tuyển)" if self.interview_round == 'round_1' else "Vòng 2 (Chuyên sâu)"
 
         self.subject = f"Thư mời phỏng vấn {round_label} - Vị trí {job_name}"
-
-        self.subject = f"Thư mời phỏng vấn vị trí {job_name}"
         self.body_html = f"""
         <div style="margin: 0px; padding: 0px;">
             <p style="margin: 0px; padding: 0px; font-size: 13px;">
@@ -195,118 +191,91 @@ class RecruitmentInterviewWizard(models.TransientModel):
 
     def action_generate_google_meet_link(self):
         """
-        Tự động gọi Google Calendar API để tạo phòng họp dùng sau (Google Meet) trên Google Cloud
-        và điền trực tiếp link thật (ví dụ: https://meet.google.com/eoy-mikq-ocb) vào ô location.
+        Tạo một Google Meet meeting space dùng sau và lưu meetingUri thật.
         """
         self.ensure_one()
-        import json
-        import requests
-        import uuid
-        import datetime
         import logging
+        import requests
 
         _logger = logging.getLogger(__name__)
 
-        access_token = None
-        # 1. Tìm Google OAuth Access Token từ User hiện tại hoặc Admin Công ty (Central Company Calendar)
-        user = self.env.user
-        if hasattr(user, 'google_calendar_account_id') and user.google_calendar_account_id and user.google_calendar_account_id.calendar_token:
-            access_token = user.google_calendar_account_id.calendar_token
+        # Phòng họp thuộc tài khoản OAuth được dùng ở đây. Ưu tiên người phỏng vấn,
+        # sau đó là user hiện tại, cuối cùng là tài khoản Calendar trung tâm.
+        users = self.interviewer_user_id | self.env.user
+        central_user = self.env["res.users"].sudo().search(
+            [("google_calendar_rtoken", "!=", False)], limit=1
+        )
+        users |= central_user
 
-        if not access_token:
-            # Thừa hưởng Token Google Calendar từ Admin / Công ty nếu User hiện tại chưa tự kết nối
-            admin_users = self.env['res.users'].sudo().search([('google_calendar_rtoken', '!=', False)], limit=1)
-            if not admin_users:
-                admin_users = self.env['res.users'].sudo().browse(2)
-            for admin in admin_users:
-                if hasattr(admin, '_get_google_calendar_token'):
-                    try:
-                        access_token = admin.sudo()._get_google_calendar_token()
-                        if access_token:
-                            break
-                    except Exception:
-                        pass
-                if not access_token and hasattr(admin, 'google_calendar_token') and admin.google_calendar_token:
-                    access_token = admin.google_calendar_token
-                    break
-
-        if not access_token:
-            fetchmail = self.env['fetchmail.server'].sudo().search([('server_type', '=', 'gmail'), ('google_gmail_refresh_token', '!=', False)], limit=1)
-            if fetchmail:
-                try:
-                    access_token, dummy = fetchmail._fetch_gmail_access_token(fetchmail.google_gmail_refresh_token)
-                except Exception as err:
-                    _logger.warning("Không lấy được access token từ fetchmail: %s", str(err))
-
-        if not access_token:
-            mail_server = self.env['ir.mail_server'].sudo().search([('smtp_authentication', '=', 'gmail'), ('google_gmail_refresh_token', '!=', False)], limit=1)
-            if mail_server:
-                try:
-                    access_token, dummy = mail_server._fetch_gmail_access_token(mail_server.google_gmail_refresh_token)
-                except Exception as err:
-                    _logger.warning("Không lấy được access token từ mail_server: %s", str(err))
-
-        candidate_name = self.application_id.candidate_id.name if self.application_id and self.application_id.candidate_id else "Ứng viên"
-        job_name = self.application_id.job_position_id.name if self.application_id and self.application_id.job_position_id else "Tuyển dụng"
-        scheduled_dt = self.scheduled_date or fields.Datetime.now()
-
-        # 2. Gọi Google Calendar API tạo phòng họp Google Meet
-        if access_token:
+        access_token = False
+        token_owner = False
+        for user in users:
+            if not user.sudo().google_calendar_rtoken:
+                continue
             try:
-                start_iso = scheduled_dt.isoformat() + 'Z'
-                end_iso = (scheduled_dt + datetime.timedelta(hours=1)).isoformat() + 'Z'
+                access_token = user.sudo()._get_google_calendar_token()
+            except Exception as exc:
+                _logger.warning(
+                    "Không lấy được Google token của user %s: %s", user.id, str(exc)
+                )
+                continue
+            if access_token:
+                token_owner = user
+                break
 
-                url = "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
-                headers = {
-                    'Authorization': f'Bearer {access_token}',
-                    'Content-Type': 'application/json',
-                }
-                body = {
-                    'summary': f"Phỏng vấn {candidate_name} - Vị trí {job_name}",
-                    'description': f"Buổi phỏng vấn tuyển dụng vị trí {job_name} cho ứng viên {candidate_name}.",
-                    'start': {'dateTime': start_iso},
-                    'end': {'dateTime': end_iso},
-                    'conferenceData': {
-                        'createRequest': {
-                            'requestId': f"odoo-meet-{uuid.uuid4().hex[:8]}",
-                            'conferenceSolutionKey': {'type': 'hangoutsMeet'},
-                        }
-                    }
-                }
-                response = requests.post(url, headers=headers, json=body, timeout=10)
-                if response.status_code in (200, 201):
-                    res_data = response.json()
-                    conf_data = res_data.get('conferenceData', {})
-                    entry_points = conf_data.get('entryPoints', [])
-                    for ep in entry_points:
-                        if ep.get('entryPointType') == 'video':
-                            meet_url = ep.get('uri')
-                            if meet_url:
-                                self.write({
-                                    'location': meet_url,
-                                    'interview_type': 'online',
-                                })
-                                self._onchange_interview_fields()
-                                return {
-                                    'type': 'ir.actions.act_window',
-                                    'res_model': 'recruitment.interview.wizard',
-                                    'res_id': self.id,
-                                    'view_mode': 'form',
-                                    'target': 'new',
-                                }
-                else:
-                    _logger.warning("Google Calendar API trả về lỗi code %s: %s", response.status_code, response.text)
-            except Exception as e:
-                _logger.warning("Lỗi khi gọi Google Calendar API: %s", str(e))
+        if not access_token:
+            raise ValidationError(
+                "Chưa có tài khoản Google Calendar được kết nối. Hãy kết nối Google "
+                "Calendar cho người phỏng vấn hoặc tài khoản quản trị trước khi tạo Meet."
+            )
 
-        # 3. Thừa hưởng sinh link Google Meet phòng họp chuẩn (xxx-yyyy-zzz) cho mọi tài khoản HR
-        code_part1 = uuid.uuid4().hex[:3]
-        code_part2 = uuid.uuid4().hex[:4]
-        code_part3 = uuid.uuid4().hex[:3]
-        fallback_meet_url = f"https://meet.google.com/{code_part1}-{code_part2}-{code_part3}"
+        try:
+            response = requests.post(
+                "https://meet.googleapis.com/v2/spaces",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json",
+                },
+                json={},
+                timeout=15,
+            )
+        except requests.RequestException as exc:
+            raise ValidationError(
+                f"Không thể kết nối Google Meet API: {str(exc)}"
+            ) from exc
+
+        try:
+            response_data = response.json()
+        except ValueError:
+            response_data = {}
+
+        if response.status_code not in (200, 201):
+            error = response_data.get("error") or {}
+            error_message = error.get("message") or response.text
+            _logger.warning(
+                "Google Meet API lỗi %s cho user %s: %s",
+                response.status_code,
+                token_owner.id if token_owner else False,
+                error_message,
+            )
+            if response.status_code == 403:
+                raise ValidationError(
+                    "Google từ chối tạo phòng Meet. Hãy bật Google Meet REST API "
+                    "trong Google Cloud và kết nối lại Google Calendar để cấp quyền "
+                    "'Create meeting spaces'. Chi tiết: " + error_message
+                )
+            raise ValidationError(
+                f"Google Meet API trả về lỗi {response.status_code}: {error_message}"
+            )
+
+        meeting_uri = response_data.get("meetingUri")
+        if not meeting_uri or not meeting_uri.startswith("https://meet.google.com/"):
+            raise ValidationError(
+                "Google Meet API không trả về meetingUri hợp lệ. Không tạo link giả."
+            )
 
         self.write({
-            'location': fallback_meet_url,
+            'location': meeting_uri,
             'interview_type': 'online',
         })
         self._onchange_interview_fields()
@@ -346,7 +315,6 @@ class RecruitmentInterviewWizard(models.TransientModel):
         # 2. Create Interview record
         round_str = "Vòng 1" if self.interview_round == 'round_1' else "Vòng 2"
         unique_name = f"Interview ({round_str}) - {app.candidate_id.name} - {fields.Datetime.to_string(self.scheduled_date)}"
-        unique_name = f"Interview - {app.candidate_id.name} - {fields.Datetime.to_string(self.scheduled_date)}"
         existing = self.env['recruitment.interview'].search([('name', '=', unique_name)], limit=1)
         if existing:
             unique_name = f"{unique_name} ({fields.Datetime.now().strftime('%H%M%S')})"
@@ -359,6 +327,7 @@ class RecruitmentInterviewWizard(models.TransientModel):
             'interview_round': self.interview_round,
             'location': self.location,
             'interviewer': self.interviewer,
+            'interviewer_user_id': assigned_user.id,
             'status': 'scheduled',
         })
 
@@ -374,13 +343,6 @@ class RecruitmentInterviewWizard(models.TransientModel):
 
         if stage_target and app.stage_id != stage_target:
             app.write({'stage_id': stage_target.id})
-        # 3. Move application to First Interview stage if currently in New / Screening
-        interview_stage = self.env.ref('recruitment.stage_first_interview', raise_if_not_found=False)
-        if not interview_stage:
-            interview_stage = self.env['recruitment.stage'].search([('name', '=ilike', 'First Interview')], limit=1)
-        if interview_stage and app.stage_id != interview_stage:
-            app.write({'stage_id': interview_stage.id})
-
         # 4. Send Email to candidate
         mail_values = {
             'subject': self.subject or f"Thư mời phỏng vấn vị trí {app.job_position_id.name}",
@@ -391,7 +353,6 @@ class RecruitmentInterviewWizard(models.TransientModel):
             'model': 'recruitment.application',
         }
         mail = self.env['mail.mail'].sudo().create(mail_values)
-        mail.sudo().send()
 
         # 5. Create Mail Activity notification for Interviewer
         activity_type = self.env.ref("mail.mail_activity_data_meeting", raise_if_not_found=False)
@@ -420,5 +381,8 @@ class RecruitmentInterviewWizard(models.TransientModel):
             date_deadline=deadline_date,
             user_id=assigned_user.id,
         )
+        # Send only after all transactional business records are valid. This
+        # minimizes external side effects when an earlier ORM operation fails.
+        mail.sudo().send()
 
         return {'type': 'ir.actions.act_window_close'}

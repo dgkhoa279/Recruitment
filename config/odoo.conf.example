@@ -7,7 +7,7 @@ db_port = 5432
 db_user = odoo
 db_password = odoo
 
-addons_path = /home/dgkhoa/Recruitment_Detail/Recruitment_Dev/odoo/addons,/home/dgkhoa/Recruitment_Detail/Recruitment_Dev/custom_addons
+addons_path = /home/dgkhoa/Recruitment_Detail/Recruitment_Dev/odoo/addons,/home/dgkhoa/Recruitment_Detail/Recruitment_Dev/custom_addons,/home/dgkhoa/Recruitment_Detail/Recruitment_Dev/custom_addons/muk_modules
 
 http_port = 8069
 log_level = debug

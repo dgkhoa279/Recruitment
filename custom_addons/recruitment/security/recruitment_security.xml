@@ -29,6 +29,7 @@
             <field name="name">Quản lý Tuyển dụng (Manager)</field>
             <field name="category_id" ref="module_category_recruitment"/>
             <field name="implied_ids" eval="[(4, ref('group_recruitment_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
             <field name="comment">Quản lý toàn bộ hồ sơ tuyển dụng các phòng ban, duyệt ký Offer, cấu hình Danh mục quy trình.</field>
         </record>
 
@@ -72,6 +73,24 @@
         <record id="recruitment_application_officer_rule" model="ir.rule">
             <field name="name">HR Officer/Manager: Xem toàn bộ Đơn ứng tuyển</field>
             <field name="model_id" ref="model_recruitment_application"/>
+            <field name="groups" eval="[(4, ref('group_recruitment_user'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
+        <record id="recruitment_cv_chunk_interviewer_rule" model="ir.rule">
+            <field name="name">Interviewer: RAG chunks theo phòng ban</field>
+            <field name="model_id" ref="model_recruitment_cv_chunk"/>
+            <field name="groups" eval="[(4, ref('group_recruitment_interviewer'))]"/>
+            <field name="domain_force">['|', '|', ('job_position_id.department_id', '=', False), ('job_position_id.department_id', '=', user.employee_id.department_id.id), ('application_id.interviewer_user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="recruitment_cv_chunk_officer_rule" model="ir.rule">
+            <field name="name">HR Officer/Manager: Toàn bộ RAG chunks</field>
+            <field name="model_id" ref="model_recruitment_cv_chunk"/>
             <field name="groups" eval="[(4, ref('group_recruitment_user'))]"/>
             <field name="domain_force">[(1, '=', 1)]</field>
         </record>
