@@ -2,7 +2,7 @@
 
 > **Hệ thống Quản lý Tuyển dụng Nhân sự Tự động hóa & Tích hợp AI trên nền tảng Odoo 17.**
 
-**Ngữ cảnh dự án**: Đây là dự án thực tế được hoàn thành trong kỳ thực tập doanh nghiệp của tôi, nhằm giải quyết bài toán tự động hóa quy trình tuyển dụng, phân quyền 3 cấp bảo mật và tích hợp các công nghệ hiện đại (AI CV Scanning, Facebook Graph API, VNPAY QR Gateway) cho doanh nghiệp.
+**Tổng quan dự án**: Đây là dự án trong kỳ thực tập doanh nghiệp, nhằm giải quyết bài toán tự động hóa quy trình tuyển dụng, phân quyền 3 cấp bảo mật và tích hợp các công nghệ hiện đại (AI CV Scanning, Facebook Graph API... cho doanh nghiệp.
 
 ---
 
@@ -10,7 +10,7 @@
 
 ### Kanban View — Quản lý Tiến trình Tuyển dụng (Stages Pipeline)
 ![Application Kanban View](https://raw.githubusercontent.com/dgkhoa/Recruitment_Dev/main/docs/screenshots/kanban_view.png)
-*Giao diện Kanban trực quan cho phép theo dõi ứng viên qua 6 vòng tuyển dụng, hiển thị % AI Matching Score và nhãn VIP.*
+*Giao diện Kanban trực quan cho phép theo dõi ứng viên qua 6 vòng tuyển dụng, hiển thị % AI Matching Score.*
 
 ### Form View — Chi tiết Đơn ứng tuyển & Kết quả Quét CV AI Engine
 ![Application Form View](https://raw.githubusercontent.com/dgkhoa/Recruitment_Dev/main/docs/screenshots/form_view.png)
@@ -30,7 +30,6 @@
 - **Enterprise RAG & MuK AI**: Lập chỉ mục CV/JD local theo chunk; hội thoại và generated tools được quản lý tập trung bởi MuK AI.
 - **Tự động hóa Email & Tiếp nhận CV**: Tiếp nhận CV tự động qua Gmail Fetchmail (lọc tiêu đề `[APPLICATION]`), tự động gửi mail mời phỏng vấn, thư nhận việc (Offer) và mail từ chối kèm lý do.
 - **Tích hợp Mạng xã hội (Facebook Integration)**: Đăng tin tuyển dụng tự động lên Facebook Fanpage chính thức của công ty qua Facebook Graph API v19.0.
-- **Thanh toán QR & Tự động xuất Hóa đơn Kế toán**: Tích hợp VNPAY QR Payment Gateway, tự động khởi tạo Hóa đơn Kế toán (`account.move`) và xác nhận thanh toán khi ứng viên trúng tuyển/VIP.
 - **Báo cáo Thống kê (Recruitment Analytics)**: Thống kê hiệu quả tuyển dụng toàn công ty qua các góc nhìn Graph Chart và Pivot Table.
 
 ---
@@ -42,7 +41,7 @@
 - **Backend Language**: Python 3.10+ (ORM, Custom Controllers, REST API Integration)
 - **Database**: PostgreSQL 14+
 - **Frontend / UI**: Odoo views và giao diện chat của MuK AI
-- **Third-party APIs**: Google Gemini fallback, Facebook Graph API v19.0, VNPAY QR Gateway, Gmail OAuth2
+- **Third-party APIs**: Google Gemini fallback, Facebook Graph API v19.0, Gmail OAuth2
 
 ### Điểm nhấn Kỹ thuật (Technical Highlights)
 - **Models & Quan hệ ORM**:
