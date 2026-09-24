@@ -13,6 +13,7 @@
                 <field name="job_position_id"/>
                 <field name="department_id" optional="show"/>
                 <field name="matching_score" widget="progressbar" string="Độ phù hợp (%)" optional="show"/>
+                <field name="rag_similarity_score" widget="progressbar" string="RAG Similarity (%)" optional="hide"/>
                 <field name="application_date"/>
                 <field name="stage_id"/>
                 <field name="source"/>
@@ -119,9 +120,11 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <field name="can_invite_interview" invisible="1"/>
+                    <field name="can_send_offer" invisible="1"/>
                     <button name="action_scan_cv" string="Quét CV" type="object" class="btn-info fw-bold" invisible="not cv_file" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
-                    <button name="action_send_interview_email" string="Mời phỏng vấn" type="object" class="oe_highlight" invisible="not active" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
-                    <button name="action_send_offer_email" string="Mời nhận việc" type="object" class="btn-success" invisible="not active" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_send_interview_email" string="Mời phỏng vấn" type="object" class="oe_highlight" invisible="not can_invite_interview" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
+                    <button name="action_send_offer_email" string="Mời nhận việc" type="object" class="btn-success" invisible="not can_send_offer" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
                     <button name="action_open_payment_wizard" string="Thanh toán" type="object" class="btn-warning" icon="fa-credit-card" invisible="not active or is_vip_paid" groups="recruitment.group_recruitment_manager"/>
                     <button name="action_open_refuse_wizard" string="Từ chối" type="object" class="btn-danger" invisible="not active"/>
                     <button name="action_restore_application" string="Khôi phục" type="object" class="btn-primary" invisible="active" icon="fa-undo" groups="recruitment.group_recruitment_user,recruitment.group_recruitment_manager"/>
@@ -139,6 +142,7 @@
                                    readonly="1"
                                    force_save="1"/>
                             <field name="candidate_id"/>
+                            <field name="employee_id" invisible="not employee_id"/>
                             <field name="job_position_id"/>
                             <field name="department_id"/>
                             <field name="application_date"/>
@@ -158,6 +162,10 @@
                     <group string="Kết quả Quét CV" invisible="not cv_file">
                         <group>
                             <field name="matching_score" widget="progressbar"/>
+                            <field name="rag_similarity_score" widget="progressbar"/>
+                            <field name="rag_index_status" widget="badge"/>
+                            <field name="rag_indexed_at" invisible="rag_index_status != 'ready'"/>
+                            <field name="rag_index_error" invisible="rag_index_status != 'failed'"/>
                         </group>
                         <group>
                             <field name="matched_skills" class="text-success fw-bold"/>

@@ -175,7 +175,6 @@ class RecruitmentOfferWizard(models.TransientModel):
             'model': 'recruitment.application',
         }
         mail = self.env['mail.mail'].sudo().create(mail_values)
-        mail.sudo().send()
 
         # 5. Create Mail Activity for HR to follow up
         activity_type = self.env.ref("mail.mail_activity_data_todo", raise_if_not_found=False)
@@ -200,5 +199,8 @@ class RecruitmentOfferWizard(models.TransientModel):
             date_deadline=self.expiration_date,
             user_id=self.env.user.id,
         )
+        # Send only after all transactional business records are valid. This
+        # minimizes external side effects when an earlier ORM operation fails.
+        mail.sudo().send()
 
         return {'type': 'ir.actions.act_window_close'}

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_muk_ai_skill_form_tool_builder" model="ir.ui.view">
+        <field name="name">muk_ai.skill.form.tool.builder</field>
+        <field name="model">muk_ai.skill</field>
+        <field name="inherit_id" ref="muk_ai_skills.view_muk_ai_skill_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Tool Builder Policy" groups="base.group_system">
+                    <group>
+                        <field name="allow_tool_creation"/>
+                        <field name="tool_max_revisions" invisible="not allow_tool_creation"/>
+                        <field name="tool_allowed_operations" widget="json" invisible="not allow_tool_creation"/>
+                    </group>
+                    <div class="alert alert-info" role="alert" invisible="not allow_tool_creation">
+                        AI lưu restricted Python source trong database. Model và field
+                        được suy ra thành capability manifest; ACL, field access và
+                        record rule của người thực thi được kiểm tra khi tạo, dry-run,
+                        sửa và mỗi lần bấm Run.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

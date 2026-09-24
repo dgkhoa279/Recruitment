@@ -41,6 +41,21 @@ class JobPosition(models.Model):
         default=True,
     )
 
+    rag_index_status = fields.Selection(
+        [
+            ("pending", "Pending"),
+            ("indexing", "Indexing"),
+            ("ready", "Ready"),
+            ("failed", "Failed"),
+        ],
+        default="pending",
+        readonly=True,
+        copy=False,
+    )
+    rag_index_error = fields.Text(readonly=True, copy=False)
+    rag_indexed_at = fields.Datetime(readonly=True, copy=False)
+    rag_source_checksum = fields.Char(readonly=True, copy=False, index=True)
+
     required_skills = fields.Char(
         string="Required Skills",
         help="Danh sách kỹ năng / từ khóa bắt buộc (ví dụ: Python, Odoo, HTML, CSS, SQL)",
@@ -121,6 +136,16 @@ class JobPosition(models.Model):
         required=True,
     )
 
+    def write(self, vals):
+        result = super().write(vals)
+        rag_fields = {"name", "description", "required_skills", "job_level"}
+        if not self.env.context.get("skip_ai_reindex") and rag_fields.intersection(vals):
+            self.with_context(skip_ai_reindex=True).write({
+                "rag_index_status": "pending",
+                "rag_index_error": False,
+            })
+        return result
+
     def action_set_recruiting(self):
         for record in self:
             record.write({"state": "recruiting", "active": True})
@@ -131,7 +156,10 @@ class JobPosition(models.Model):
 
     def action_set_draft(self):
         for record in self:
-            record.write({"state": "draft"})
+            record.write({
+                "state": "draft",
+                "facebook_repost_allowed": True,
+            })
 
     facebook_post_id = fields.Char(
         string="Facebook Post ID",
@@ -148,6 +176,78 @@ class JobPosition(models.Model):
         readonly=True,
         copy=False,
     )
+    facebook_repost_allowed = fields.Boolean(
+        string="Facebook Repost Allowed",
+        default=False,
+        readonly=True,
+        copy=False,
+    )
+
+    def _fetch_facebook_permalink(self, post_id, access_token):
+        """Return Facebook's canonical URL instead of guessing it from the post ID."""
+        import logging
+        import requests
+
+        _logger = logging.getLogger(__name__)
+        try:
+            response = requests.get(
+                f"https://graph.facebook.com/v19.0/{post_id}",
+                params={
+                    "fields": "permalink_url",
+                    "access_token": access_token.strip(),
+                },
+                timeout=10,
+            )
+            if response.status_code == 200:
+                return response.json().get("permalink_url") or False
+
+            _logger.warning(
+                "Không lấy được permalink Facebook cho post %s: %s",
+                post_id,
+                response.text,
+            )
+        except Exception as exc:
+            _logger.warning(
+                "Không thể truy vấn permalink Facebook cho post %s: %s",
+                post_id,
+                str(exc),
+            )
+        return False
+
+    def action_open_facebook_post(self):
+        """Open the canonical permalink and repair legacy generated URLs on demand."""
+        self.ensure_one()
+        if not self.facebook_post_id:
+            raise ValidationError("Vị trí tuyển dụng này chưa có bài đăng Facebook.")
+
+        post_url = (self.facebook_post_url or "").strip()
+        legacy_urls = {
+            f"https://facebook.com/{self.facebook_post_id}",
+            f"https://www.facebook.com/{self.facebook_post_id}",
+        }
+        if not post_url or post_url.rstrip("/") in legacy_urls:
+            access_token = self.env["ir.config_parameter"].sudo().get_param(
+                "recruitment.facebook_page_access_token", default=""
+            )
+            if not access_token:
+                raise ValidationError(
+                    "Không thể lấy link bài đăng vì chưa cấu hình Facebook Page Access Token."
+                )
+            post_url = self._fetch_facebook_permalink(
+                self.facebook_post_id, access_token
+            )
+            if not post_url:
+                raise ValidationError(
+                    "Facebook đã tạo bài viết nhưng Graph API không trả về permalink_url. "
+                    "Vui lòng kiểm tra quyền đọc bài viết của Page Access Token."
+                )
+            self.write({"facebook_post_url": post_url})
+
+        return {
+            "type": "ir.actions.act_url",
+            "url": post_url,
+            "target": "new",
+        }
 
     def action_post_to_facebook(self):
         self.ensure_one()
@@ -155,6 +255,12 @@ class JobPosition(models.Model):
         import logging
 
         _logger = logging.getLogger(__name__)
+
+        if self.facebook_post_id and not self.facebook_repost_allowed:
+            raise ValidationError(
+                "Tin tuyển dụng này đã được đăng lên Facebook. "
+                "Hãy chuyển về trạng thái Nháp trước khi đăng lại."
+            )
 
         page_id = self.env['ir.config_parameter'].sudo().get_param('recruitment.facebook_page_id', default='')
         access_token = self.env['ir.config_parameter'].sudo().get_param('recruitment.facebook_page_access_token', default='')
@@ -193,8 +299,6 @@ class JobPosition(models.Model):
 
         if self.description:
             desc_clean = self.description.strip()
-            if len(desc_clean) > 400:
-                desc_clean = desc_clean[:400] + "..."
             message_parts.append(f"\n📋 MÔ TẢ CÔNG VIỆC:\n{desc_clean}")
 
         company_email = (self.env.company.email or "").strip()
@@ -231,11 +335,13 @@ class JobPosition(models.Model):
 
             if response.status_code in (200, 201) and 'id' in res_json:
                 post_id = res_json['id']
-                post_url = f"https://facebook.com/{post_id}"
+                post_url = self._fetch_facebook_permalink(post_id, access_token)
                 self.write({
                     'facebook_post_id': post_id,
-                    'facebook_post_url': post_url,
+                    'facebook_post_url': post_url or False,
                     'facebook_post_date': fields.Datetime.now(),
+                    'facebook_repost_allowed': False,
+                    'state': 'recruiting',
                 })
                 return {
                     'type': 'ir.actions.client',
@@ -300,48 +406,42 @@ class JobPosition(models.Model):
 
     def action_recommend_top_candidates(self):
         """
-        Computes Vector Cosine Similarity between Job Requirements Vector and all Candidate CV Vectors in Database.
-        Returns Top 10 matching applications instantly!
+        Retrieve CV chunks semantically close to this JD and aggregate by application.
         """
         self.ensure_one()
         ai_service = self.env["recruitment.ai.service"]
         job_text = f"{self.name} {self.required_skills or ''} {self.description or ''}"
-        job_vec = ai_service.generate_vector_embedding(job_text)
-
-        app_model = self.env["recruitment.application"]
-        applications = app_model.search([("active", "=", True), ("cv_file", "!=", False)])
-        if not applications:
-            raise ValidationError("Không tìm thấy Đơn ứng tuyển nào có file CV trong hệ thống để so sánh Vector!")
-
-        import json
-
-        results = []
-        for app in applications:
-            if app.cv_vector_json:
-                try:
-                    cv_vec = json.loads(app.cv_vector_json)
-                except Exception:
-                    cv_vec = []
-            else:
-                cv_vec = []
-
-            if not cv_vec:
-                cv_text = f"{app.matched_skills or ''} {app.cv_extracted_text or ''}"
-                cv_vec = ai_service.generate_vector_embedding(cv_text)
-                app.write({"cv_vector_json": json.dumps(cv_vec)})
-
-            match_pct = ai_service.compute_cosine_similarity(job_vec, cv_vec)
-            app.write({"matching_score": match_pct})
-            results.append((app.id, match_pct))
-
-        results.sort(key=lambda x: x[1], reverse=True)
-        top_app_ids = [r[0] for r in results[:10]]
+        chunks = ai_service.rag_retrieve_relevant_chunks(
+            job_text,
+            document_type="cv",
+            top_k=50,
+            candidate_k=100,
+        )
+        best_by_application = {}
+        for chunk in chunks:
+            application_id = chunk["application_id"]
+            if application_id:
+                best_by_application[application_id] = max(
+                    best_by_application.get(application_id, -100.0),
+                    chunk["score"],
+                )
+        if not best_by_application:
+            raise ValidationError(
+                "Chưa có CV chunks tương thích. Hãy kiểm tra RAG status và embedding settings."
+            )
+        results = sorted(best_by_application.items(), key=lambda item: item[1], reverse=True)
+        top_app_ids = [application_id for application_id, _score in results[:10]]
+        applications = self.env["recruitment.application"].browse(top_app_ids).exists()
+        for application in applications:
+            application.write({
+                "rag_similarity_score": round(best_by_application[application.id], 2)
+            })
 
         return {
-            "name": f"Top Ứng viên Phù hợp nhất cho {self.name} (Vector Search)",
+            "name": f"Top ứng viên cho {self.name} (RAG Retrieval)",
             "type": "ir.actions.act_window",
             "res_model": "recruitment.application",
             "view_mode": "tree,kanban,form",
             "domain": [("id", "in", top_app_ids)],
-            "context": {"order": "matching_score desc"},
+            "context": {"order": "rag_similarity_score desc"},
         }

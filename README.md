@@ -26,7 +26,8 @@
 
 - **Quản lý Vị trí Tuyển dụng (Job Positions)**: Tạo vị trí tuyển dụng, quản lý chỉ tiêu, hạn nộp, định biên phòng ban và khung lương ngân sách.
 - **Quản lý Hồ sơ Ứng viên & Quy trình (Applicants & Stages)**: Theo dõi tiến trình ứng tuyển qua Kanban 6 bước (`New` → `Screening` → `First Interview` → `Second Interview` → `Offer` → `Hired`).
-- **Sàng lọc & Quét CV Thông minh (AI CV Scanning)**: Tự động bóc tách kỹ năng từ file CV PDF bằng Google Gemini / OpenAI Vision, chấm điểm % phù hợp và gợi ý Top ứng viên bằng Vector Cosine Similarity (768 chiều).
+- **Sàng lọc & Quét CV Thông minh (AI CV Scanning)**: Trích xuất CV PDF, phân tích có cấu trúc bằng Ollama local với Gemini fallback, chấm điểm phù hợp và gợi ý ứng viên bằng semantic retrieval.
+- **Enterprise RAG & MuK AI**: Lập chỉ mục CV/JD local theo chunk; hội thoại và generated tools được quản lý tập trung bởi MuK AI.
 - **Tự động hóa Email & Tiếp nhận CV**: Tiếp nhận CV tự động qua Gmail Fetchmail (lọc tiêu đề `[APPLICATION]`), tự động gửi mail mời phỏng vấn, thư nhận việc (Offer) và mail từ chối kèm lý do.
 - **Tích hợp Mạng xã hội (Facebook Integration)**: Đăng tin tuyển dụng tự động lên Facebook Fanpage chính thức của công ty qua Facebook Graph API v19.0.
 - **Thanh toán QR & Tự động xuất Hóa đơn Kế toán**: Tích hợp VNPAY QR Payment Gateway, tự động khởi tạo Hóa đơn Kế toán (`account.move`) và xác nhận thanh toán khi ứng viên trúng tuyển/VIP.
@@ -40,12 +41,12 @@
 - **Core Framework**: Odoo 17.0 Community Edition
 - **Backend Language**: Python 3.10+ (ORM, Custom Controllers, REST API Integration)
 - **Database**: PostgreSQL 14+
-- **Frontend / UI**: OWL (Odoo Web Library), QWeb XML Templates, SCSS, JavaScript ES6
-- **Third-party APIs**: Google Gemini API, OpenAI API, Facebook Graph API v19.0, VNPAY QR Gateway, Gmail OAuth2
+- **Frontend / UI**: Odoo views và giao diện chat của MuK AI
+- **Third-party APIs**: Google Gemini fallback, Facebook Graph API v19.0, VNPAY QR Gateway, Gmail OAuth2
 
 ### Điểm nhấn Kỹ thuật (Technical Highlights)
 - **Models & Quan hệ ORM**:
-  - Khai báo 10 Custom Models (`recruitment.job.position`, `recruitment.candidate`, `recruitment.application`, `recruitment.interview`, `recruitment.offer`, `recruitment.stage`, `recruitment.refuse.reason`, `recruitment.ai.tool`...).
+  - Các model nghiệp vụ chính cùng model AI chuyên biệt `recruitment.cv.chunk` phục vụ semantic retrieval.
   - Sử dụng quan hệ `Many2one`, `One2many`, và trường `related` (VD: `department_id` tự động kế thừa từ `job_position_id`).
   - Decorators chuẩn: `@api.depends` (tính `hired_quantity`, `name`), `@api.onchange`, và `@api.constrains` (ràng buộc logic ngày phỏng vấn, lương tối thiểu/tối đa, email/SĐT hợp lệ).
 - **Inheritance & Mixins**:
@@ -54,7 +55,7 @@
   - Kế thừa module `payment` chuẩn của Odoo để xây dựng custom provider `payment_vnpay`.
 - **Views Giao diện Custom**:
   - Xây dựng 6 loại Views: **Form View**, **Tree/List View**, **Kanban View**, **Search View (Filters & Group By)**, **Graph View**, **Pivot View**.
-  - Custom **OWL Component** cho widget AI Copilot (JS/SCSS/QWeb XML).
+  - Dùng giao diện MuK AI làm chatbox duy nhất, không duy trì OWL AI Copilot riêng trong Recruitment.
 - **Security & Phân quyền 3 Lớp**:
   - **ACL (`ir.model.access.csv`)**: Phân quyền chi tiết CRUD cho 3 nhóm người dùng (`Interviewer`, `HR Officer`, `HR Manager`). Khóa quyền xóa vĩnh viễn dữ liệu (`perm_unlink=0`) để bảo toàn dữ liệu kiểm toán.
   - **Record Rules (`ir.rule`)**: Lọc dữ liệu theo domain force (`department_id` thuộc phòng ban người dùng) để Interviewer chỉ thấy dữ liệu phòng ban mình.
@@ -76,7 +77,15 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r odoo/requirements.txt
 pip install pypdf requests
+
+# MuK AI + MuK MCP, đúng nhánh Odoo 17
+mkdir -p custom_addons
+git clone --depth 1 --branch 17.0 \
+  https://github.com/muk-it/odoo-modules.git custom_addons/muk_modules
+git -C custom_addons/muk_modules checkout 6fba2359123c7a3d9b9604ff2084efd7596841f0
 ```
+
+Tài liệu AI: [Kiến trúc hiện hành](custom_addons/recruitment/docs/ai_architecture.md) · [Cấu hình RAG và Local LLM](custom_addons/recruitment/docs/enterprise_ai_setup.md).
 
 ### Bước 2: Cấu hình Odoo Config (`config/odoo.conf`)
 
@@ -87,16 +96,31 @@ db_port = 5432
 db_user = odoo
 db_password = False
 db_name = recruitment
-addons_path = ./odoo/addons,./custom_addons
+addons_path = ./odoo/addons,./custom_addons,./custom_addons/muk_modules
 ```
 
 ### Bước 3: Khởi chạy Server & Cài đặt Module
 
 ```bash
-./venv/bin/python ./odoo/odoo-bin -c ./config/odoo.conf -d recruitment -i recruitment
+./venv/bin/python ./odoo/odoo-bin -c ./config/odoo.conf \
+  -d recruitment -i recruitment,muk_ai_ollama
 ```
 
 Truy cập hệ thống tại: `http://localhost:8069`
+
+MuK AI dùng addon cầu nối `muk_ai_ollama` của dự án. Cấu hình tại
+**MuK AI > Configuration > Providers > Ollama (Local)** với endpoint mặc định
+`http://127.0.0.1:11434` và model mặc định `qwen3:1.7b`.
+
+Ollama được chạy bằng user service có giới hạn RAM 4 GB trong
+[`config/ollama-recruitment.service`](config/ollama-recruitment.service). Binary
+và model được lưu dưới `third_party/ollama` (không commit vào Git). Kiểm tra bằng:
+
+```bash
+systemctl --user status ollama-recruitment.service
+third_party/ollama/dist/bin/ollama list
+third_party/ollama/dist/bin/ollama ps
+```
 
 ---
 

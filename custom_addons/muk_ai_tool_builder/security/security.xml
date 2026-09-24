@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="rule_generated_tool_owner" model="ir.rule">
+        <field name="name">Generated Tool: owner only</field>
+        <field name="model_id" ref="model_muk_ai_generated_tool"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('owner_id', '=', user.id)]</field>
+    </record>
+
+    <record id="rule_generated_tool_admin" model="ir.rule">
+        <field name="name">Generated Tool: administrators see all</field>
+        <field name="model_id" ref="model_muk_ai_generated_tool"/>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_generated_tool_revision_owner" model="ir.rule">
+        <field name="name">Generated Tool Revision: owner only</field>
+        <field name="model_id" ref="model_muk_ai_generated_tool_revision"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('owner_id', '=', user.id)]</field>
+    </record>
+
+    <record id="rule_generated_tool_revision_admin" model="ir.rule">
+        <field name="name">Generated Tool Revision: administrators see all</field>
+        <field name="model_id" ref="model_muk_ai_generated_tool_revision"/>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <record id="rule_generated_tool_run_owner" model="ir.rule">
+        <field name="name">Generated Tool Run: owner only</field>
+        <field name="model_id" ref="model_muk_ai_generated_tool_run"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+    </record>
+
+    <record id="rule_generated_tool_run_admin" model="ir.rule">
+        <field name="name">Generated Tool Run: administrators see all</field>
+        <field name="model_id" ref="model_muk_ai_generated_tool_run"/>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+</odoo>

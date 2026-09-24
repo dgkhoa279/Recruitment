@@ -1,11 +1,26 @@
+import base64
 import datetime
+from unittest.mock import patch
+
 from odoo import fields
+from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase
 
 from ..models.application_email_parser import ApplicationEmailParser
 
 
 class TestApplicationEmailParser(TransactionCase):
+
+    def setUp(self):
+        super().setUp()
+        ai_service = self.env['recruitment.ai.service']
+        provider_patch = patch.object(
+            type(ai_service),
+            'analyze_cv',
+            return_value=None,
+        )
+        provider_patch.start()
+        self.addCleanup(provider_patch.stop)
 
     def test_valid_application_email(self):
 
@@ -227,6 +242,50 @@ Vị trí ứng tuyển: Python Developer
         self.assertEqual(interviews.interviewer, 'Trần Văn A')
         self.assertEqual(interviews.location, 'https://meet.google.com/test-meet')
 
+        # A real calendar.event is created and linked to the Interview. It is
+        # then eligible for the standard Odoo -> Google Calendar synchronization.
+        calendar_event = interviews.calendar_event_id
+        self.assertTrue(calendar_event)
+        self.assertEqual(calendar_event.start, future_date)
+        self.assertEqual(
+            calendar_event.stop,
+            future_date + datetime.timedelta(hours=1),
+        )
+        self.assertEqual(calendar_event.user_id, self.env.user)
+        self.assertEqual(calendar_event.location, 'https://meet.google.com/test-meet')
+        self.assertEqual(
+            calendar_event.videocall_location,
+            'https://meet.google.com/test-meet',
+        )
+        self.assertIn(
+            self.env.user.partner_id,
+            calendar_event.attendee_ids.partner_id,
+        )
+
+        # Schedule changes and cancellation stay synchronized with Calendar.
+        rescheduled_date = future_date + datetime.timedelta(hours=2)
+        interviews.write({
+            'scheduled_date': rescheduled_date,
+            'location': 'https://meet.google.com/rescheduled-meet',
+        })
+        self.assertEqual(calendar_event.start, rescheduled_date)
+        self.assertEqual(
+            calendar_event.stop,
+            rescheduled_date + datetime.timedelta(hours=1),
+        )
+        self.assertEqual(
+            calendar_event.location,
+            'https://meet.google.com/rescheduled-meet',
+        )
+        self.assertEqual(
+            len(calendar_event.attendee_ids.filtered(
+                lambda attendee: attendee.partner_id == self.env.user.partner_id
+            )),
+            1,
+        )
+        interviews.status = 'cancelled'
+        self.assertFalse(calendar_event.active)
+
         # Verify Mail Activity created for Application
         self.assertTrue(app.activity_ids)
         self.assertIn("Phỏng vấn ứng viên", app.activity_ids[0].summary)
@@ -273,6 +332,7 @@ Vị trí ứng tuyển: Python Developer
         candidate = self.env['recruitment.candidate'].create({
             'name': 'Nguyễn Văn Skill',
             'email': 'skill.test@example.com',
+            'phone': '0900000000',
             'job_position_id': job.id,
         })
 
@@ -287,3 +347,77 @@ Vị trí ứng tuyển: Python Developer
         self.assertEqual(app.matching_score, 80.0)
         self.assertIn("Python", app.matched_skills)
         self.assertIn("PostgreSQL", app.missing_skills)
+
+    def test_hired_application_creates_one_employee(self):
+        department = self.env['hr.department'].create({
+            'name': 'Phòng Kỹ thuật kiểm thử',
+        })
+        job = self.env['recruitment.job.position'].create({
+            'name': 'Backend Engineer Test',
+            'department_id': department.id,
+            'employment_type': 'internship',
+            'required_skills': 'Python, PostgreSQL',
+        })
+        candidate = self.env['recruitment.candidate'].create({
+            'name': 'Nguyễn Văn Hired',
+            'email': 'hired.employee@example.com',
+            'phone': '0901234567',
+            'address': '123 Đường Kiểm Thử',
+            'date_of_birth': '2000-01-02',
+            'gender': 'male',
+            'education': 'Kỹ thuật phần mềm',
+            'skills': 'Python, SQL',
+            'cv_file': base64.b64encode(b'test cv content'),
+            'cv_filename': 'candidate-cv.pdf',
+            'job_position_id': job.id,
+        })
+        application = self.env['recruitment.application'].create({
+            'candidate_id': candidate.id,
+            'job_position_id': job.id,
+            'source': 'email',
+        })
+
+        offer_stage = self.env.ref('recruitment.stage_offer')
+        hired_stage = self.env.ref('recruitment.stage_hired')
+        application.stage_id = offer_stage
+        self.assertFalse(application.can_invite_interview)
+        with self.assertRaises(ValidationError):
+            application.action_send_interview_email()
+
+        application.stage_id = hired_stage
+        employee = application.employee_id
+        self.assertTrue(employee)
+        self.assertFalse(application.can_send_offer)
+        with self.assertRaises(ValidationError):
+            application.action_send_offer_email()
+        self.assertEqual(employee.name, candidate.name)
+        self.assertEqual(employee.work_email, candidate.email)
+        self.assertEqual(employee.private_email, candidate.email)
+        self.assertEqual(employee.mobile_phone, candidate.phone)
+        self.assertEqual(employee.private_phone, candidate.phone)
+        self.assertEqual(employee.private_street, candidate.address)
+        self.assertEqual(employee.birthday, candidate.date_of_birth)
+        self.assertEqual(employee.gender, candidate.gender)
+        self.assertEqual(employee.study_field, candidate.education)
+        self.assertEqual(employee.department_id, department)
+        self.assertEqual(employee.job_id.name, job.name)
+        self.assertEqual(employee.job_id.department_id, department)
+        self.assertEqual(employee.employee_type, 'trainee')
+        self.assertTrue(self.env['ir.attachment'].search_count([
+            ('res_model', '=', 'hr.employee'),
+            ('res_id', '=', employee.id),
+            ('name', '=', 'candidate-cv.pdf'),
+        ]))
+
+        employee_count = self.env['hr.employee'].search_count([
+            ('work_email', '=', candidate.email),
+        ])
+        application.stage_id = offer_stage
+        application.stage_id = hired_stage
+        self.assertEqual(application.employee_id, employee)
+        self.assertEqual(
+            self.env['hr.employee'].search_count([
+                ('work_email', '=', candidate.email),
+            ]),
+            employee_count,
+        )

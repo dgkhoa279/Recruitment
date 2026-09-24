@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="skill_recruitment_interview_tool_builder" model="muk_ai.skill">
+        <field name="name">odoo_script_tool_builder</field>
+        <field name="label">Tạo script tool theo quyền Odoo</field>
+        <field name="icon">fa-wrench</field>
+        <field name="description">Tạo, chạy và sửa restricted Python tool trên các model mà người dùng hiện tại có quyền truy cập.</field>
+        <field name="user_ids" eval="[(5, 0, 0)]"/>
+        <field name="allow_tool_creation" eval="True"/>
+        <field name="tool_allowed_operations" eval="['read', 'create', 'write', 'unlink']"/>
+        <field name="tool_max_revisions">3</field>
+        <field name="body"><![CDATA[
+# Tạo restricted Python tool theo quyền Odoo
+
+Chỉ dùng workflow này khi người dùng yêu cầu tạo hoặc sửa một tool tái sử dụng.
+Tool là source code được lưu trong database, không phải một hàm nghiệp vụ viết
+sẵn trong backend.
+
+Ở đầu mỗi yêu cầu, model đọc nguyên văn lời người dùng và ngữ cảnh hội thoại,
+giữ nguyên dấu tiếng Việt, rồi gọi `route_tool_request`:
+- `create`: tạo một tool tái sử dụng.
+- `repair`: sửa tool đã có, truyền đúng `tool_name`.
+- `run`: sử dụng tool đã có, truyền đúng `tool_name`.
+- `chat`: giải thích, trò chuyện hoặc yêu cầu nghiệp vụ một lần.
+Truyền `summary` tóm tắt đúng ý định và điều kiện bằng ngôn ngữ người dùng.
+Luôn cung cấp đủ `intent`, `summary`, `tool_name`, `question` trong quyết định
+routing; dùng chuỗi rỗng cho `tool_name` khi người dùng chưa đặt tên và cho
+`question` khi không cần hỏi lại. Ví dụ yêu cầu tạo tool đã rõ:
+`{"intent":"create","summary":"Tạo công cụ","tool_name":"","question":""}`.
+Nếu chưa rõ ý định hoặc tool nào thì gọi `ask_user`. Không suy ra phủ định chỉ
+từ một từ riêng lẻ: “không tạo dữ liệu” vẫn có thể là điều kiện của yêu cầu
+tạo tool; “dùng AI” khác “đừng dùng AI”. Đợi kết quả định tuyến rồi mới gọi
+các tool tiếp theo. Định tuyến không cấp quyền hoặc thực thi dữ liệu.
+
+1. Sau khi chọn `create`, dùng phạm vi ứng dụng và model backend cung cấp từ màn
+   hình nghiệp vụ. Gọi `inspect_authorized_model` để lấy field và kiểm tra quyền
+   cần thiết. Nếu thiếu ngữ cảnh màn hình thì yêu cầu user mở đúng màn hình và
+   tạo chat mới, không tự tìm toàn hệ thống. Sau đó gọi
+   `define_generated_tool_task` trước khi viết source: summary, target,
+   expected_result, uses_ai, models (model, operations, read_fields, write_fields).
+   Dùng lại model đã inspect thành công. Nếu chỉ có một model, backend tự điền
+   model vào contract; bỏ thuộc tính model khi schema không yêu cầu. Nếu nhiều
+   model đã inspect, chỉ dùng các model trong danh sách được trả về.
+   Khi cần kiểm tra thêm quyền ghi, giữ nguyên model đã chọn.
+   Nhiệm vụ phải đúng yêu cầu user, không lấy model đang mở làm mặc định.
+   Không thay yêu cầu viết mô tả thành đếm bản ghi. Nếu mơ hồ thì hỏi lại user.
+2. Sinh Python statements dùng `params` và các API tổng quát của `ctx`:
+   `search`, `read`, `search_count`, `create`, `write`, `unlink`, `generate_text`.
+   Script phải gán output cuối cùng vào biến `result`.
+   Model trong source phải đúng model của contract đã lưu. Nếu source dùng sai
+   model, sửa source về model đã chọn; không đổi nhiệm vụ cho khớp source sai.
+3. Gọi `propose_generated_tool`. Server tự phân tích source thành capability
+   manifest, kiểm tra ACL/field/record rule bằng đúng user, lưu source vào DB và
+   đối chiếu task contract và xác thực tĩnh trước khi chuyển sang active.
+   Active không chứng minh tool đúng nghiệp vụ. Xác thực tĩnh không chạy dữ liệu.
+4. Khi sửa, chọn `repair`, gọi `inspect_generated_tool`, rồi discovery quyền,
+   khai báo task contract và gọi `revise_generated_tool` với toàn
+   bộ source mới. Không sửa lỗi access bằng cách đổi model hoặc mở rộng quyền.
+5. Chỉ báo thành công khi server trả `status=active` và `generated_tool_id`.
+   Không tự chạy tool sau khi tạo; người dùng bấm Run, duyệt nhiệm vụ, nhập tham số,
+   Preview rồi Confirm. AI không được tự xác nhận thay user.
+6. Preview không thực thi create/write/unlink thật. Đọc hết dữ liệu cần thiết
+   trước khi thay đổi cùng model; gộp mỗi bản ghi thành một write. Không dùng
+   relational commands hoặc thao tác tiếp trên ID mới tạo trong cùng tool.
+   Sinh draft AI chỉ chạy khi user đồng ý; Confirm dùng lại nội dung đã duyệt.
+   Công bố giới hạn batch, không báo đã xử lý toàn bộ nếu dữ liệu bị giới hạn.
+
+Không dùng import, `env`, SQL, `sudo()`, field traversal, private attribute,
+dynamic call hoặc vòng lặp while. Quyền được kiểm tra lại ở mỗi lần Run.
+        ]]></field>
+    </record>
+</odoo>

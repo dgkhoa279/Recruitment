@@ -14,7 +14,9 @@
                 <field name="scheduled_date"/>
                 <field name="interview_type"/>
                 <field name="interview_round"/>
+                <field name="interviewer_user_id"/>
                 <field name="interviewer"/>
+                <field name="calendar_event_id" optional="hide"/>
                 <field name="status"/>
                 <field name="result"/>
                 <field name="rating"/>
@@ -44,7 +46,9 @@
                             <field name="interview_type"/>
                             <field name="interview_round"/>
                             <field name="location"/>
+                            <field name="interviewer_user_id"/>
                             <field name="interviewer"/>
+                            <field name="calendar_event_id"/>
                         </group>
                     </group>
 
