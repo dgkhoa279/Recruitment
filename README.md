@@ -9,15 +9,18 @@
 ## 📸 Screenshots & Demo
 
 ### Kanban View — Quản lý Tiến trình Tuyển dụng (Stages Pipeline)
-![Application Kanban View](https://raw.githubusercontent.com/dgkhoa/Recruitment_Dev/main/docs/screenshots/kanban_view.png)
-*Giao diện Kanban trực quan cho phép theo dõi ứng viên qua 6 vòng tuyển dụng, hiển thị % AI Matching Score.*
+<img width="933" height="405" alt="image" src="https://github.com/user-attachments/assets/0a461e7a-f8f7-49c9-a7dc-983264fda431" />
+
+*Giao diện Kanban theo dõi ứng viên qua 6 vòng tuyển dụng, hiển thị % AI Matching Score.*
 
 ### Form View — Chi tiết Đơn ứng tuyển & Kết quả Quét CV AI Engine
-![Application Form View](https://raw.githubusercontent.com/dgkhoa/Recruitment_Dev/main/docs/screenshots/form_view.png)
+<img width="933" height="506" alt="image" src="https://github.com/user-attachments/assets/d3e81018-6590-421b-b326-23b6fe422c25" />
+
 *Form chi tiết đơn ứng tuyển tích hợp bóc tách CV tự động bằng AI, gợi ý kỹ năng đạt/thiếu và tóm tắt nhận xét.*
 
 ### Dashboard & Analytics — Thống kê Tuyển dụng (Graph & Pivot)
-![Recruitment Analytics](https://raw.githubusercontent.com/dgkhoa/Recruitment_Dev/main/docs/screenshots/analytics_view.png)
+<img width="933" height="486" alt="image" src="https://github.com/user-attachments/assets/5ea12cb2-7145-406c-a4a3-730a072b7026" />
+
 *Báo cáo phân tích số lượng ứng viên theo vị trí và vòng tuyển dụng dạng biểu đồ cột và bảng Pivot.*
 
 ---
