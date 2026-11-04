@@ -128,7 +128,7 @@ third_party/ollama/dist/bin/ollama ps
 ### Tác giả
 **Võ Đăng Khoa**
 - **Email**: vodangkhoa270904@gmail.com
-- **GitHub**: [github.com/dgkhoa](https://github.com/dgkhoa)
+- **GitHub**: [github.com/dgkhoa279](https://github.com/dgkhoa279)
 
 ### License
 Được phát hành dưới giấy phép [LGPL-3.0](https://www.gnu.org/licenses/lgpl-3.0.html), tuân theo chính sách License của Odoo Community.
